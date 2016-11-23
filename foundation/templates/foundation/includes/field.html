@@ -1,0 +1,17 @@
+{# expects to have form, fieldset, and fieldline in context #}
+
+{% block field %}
+{% if field.form.is_readonly or field.is_readonly or not field.form.view.edit %}
+  {% if field.field.widget.display_template %}
+    {% include field.field.widget.display_template %}
+  {% else %}
+    {{ field.contents|default:'unknown' }}
+  {% endif %}
+{% else %}
+  {% if field.field.widget.edit_template %}
+    {% include field.field.widget.edit_template %}
+  {% else %}
+    {{ field }}
+  {% endif %}
+{% endif %}
+{% endblock field %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    {% comment %}
+    {% block search %}{% search_form cl %}{% endblock %}
+    {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
+
+    {% block filters %}
+      {% if cl.has_filters %}
+        <div id="changelist-filter">
+          <h2>{% trans 'Filter' %}</h2>
+          {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+        </div>
+      {% endif %}
+    {% endblock %}
+    {% endcomment %}
+    <form id="changelist-form" method="post"{% if formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+      {% include formset.opts.formset_template %}
+    </form>
+  </div>
+
+
+{% endblock %}

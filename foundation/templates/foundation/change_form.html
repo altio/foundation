@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block content %}
+
+<h2>
+  <span>{{ view.get_title | capfirst }}</span>
+  {% block object-actions-header %}
+    <span>
+    {% if not view.edit %}
+      {% if has_change_permission %}&nbsp;<a href="{{ view.get_edit_url }}">{% trans 'Edit' %}</a>{% endif %}
+      {% if has_delete_permission %}&nbsp;<a href="{{ view.get_delete_url }}">{% trans 'Delete' %}</a>{% endif %}
+    {% endif %}
+    </span>
+  {% endblock object-actions-header %}
+</h2>
+
+{% block before-object %}{% endblock %}
+
+{% block object %}
+  <!-- <form action="{{ app_path }}" method="post">  -->
+  <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ opts.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
+    {% block form %}
+    {% for fieldset in form.fieldsets %}
+      {% include "includes/fieldset.html" %}
+    {% endfor %}
+    {% endblock %}
+
+    {% block inline_formsets %}
+    {% for formset in inline_formsets %}
+      {% include formset.opts.formset_template %}
+    {% endfor %}
+    {% endblock %}
+
+    {% block object-actions-after %}
+    {% if view.edit %}
+    <p>
+      <button type="submit">{% trans 'Save ' %}{{ controller.opts.verbose_name|title }}</button>
+      &nbsp;<a href="javascript:history.back()">{% trans 'Cancel' %}</a>
+      {% if object.pk and has_delete_permission %}
+        &nbsp;<a href="{{ object.get_delete_url }}">{% trans 'Delete this ' %}{{ opts.verbose_name|title }}</a>
+      {% endif %}
+    </p>
+    {% endif %}
+    {% endblock object-actions-after %}
+  </form>
+{% endblock object %}
+
+{% block after-object %}{% endblock %}
+
+{% endblock content %}

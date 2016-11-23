@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block extrahead %}{{ block.super }}
+<link rel="icon" type="image/x-icon" href="{% static 'img/logo.png' %}" />
+{% endblock extrahead %}
+
+{% block header %}
+<!-- Header -->
+<nav class="navbar {% block navbar-classes %} navbar-inverse navbar-fixed-top{% endblock %}">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            {% block branding %}
+            <a class="navbar-brand" href="/">
+              <img alt="home" style="display: inline-block; max-width: 100%; max-height: 100%;" src="{% static 'img/logo.png' %}" />
+            </a>
+            {% endblock %}
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+            {% block header-navbar %}
+            <ul class="nav navbar-nav">
+                 {% block nav %}{% endblock %}
+            </ul>
+            <form class="nav navbar-form {% block nav-form-classes %} navbar-right{% endblock %}">
+              {% block nav-form %}
+                {% if user.is_active %}
+                  <div class="btn-group">
+                    <a class="btn btn-primary" href="#"><i class="fa fa-user fa-fw"></i> {% filter force_escape %}{% firstof user.get_short_name user.get_username user.first_name user.username %}{% endfilter %}</a>
+                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                      <span class="fa fa-caret-down"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                      <li><a href="#"><i class="fa fa-pencil fa-fw"></i> Edit</a></li>
+                      <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> Delete</a></li>
+                      <li><a href="#"><i class="fa fa-ban fa-fw"></i> Ban</a></li>
+                      <li class="divider"></li>
+                      {% if user.is_superuser %}     
+                         {% if request.session.act_as_superuser %}
+                         <li><a href="{{request.path}}"><i class="i"></i> Remove superuser</a></li>
+                         {% else %}
+                         <li><a href="{{request.path}}"><i class="i"></i> Elevate to superuser</a></li>
+                         {% endif %}
+                      {% endif %}
+                      <li class="divider"></li>
+                      {% if user.is_staff %}
+                      <li><a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a></li>
+                      {% endif %}
+                      {% if user.has_usable_password %}
+                      <li><a href="{% url 'admin:password_change' %}">{% trans 'Change password' %}</a></li>
+                      {% endif %}
+                      <li><a href="{% url 'logout' %}?next={{request.path}}">{% trans 'Log out' %}</a></li>
+                      {% if user.is_staff %}
+                      {% comment languages %}
+                      {% block languages %}
+                      <li class="divider-vertical"></li>
+                      {% language_selector %}
+                      {% endblock languages %}
+                      {% endcomment languages%}
+                      {% comment recent %}
+                      {% block logs %}
+                      <li class="dropdown" id="recent-actions-module">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">{% trans 'Recent Actions' %} <b class="caret"></b></a>
+                          {% load log %}
+                          {% get_admin_log 10 as admin_log for_user user %}
+                          <ul class="dropdown-menu">
+                              {% for entry in admin_log %}
+                              <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                                  <a href="{% if entry.is_deletion or not entry.get_admin_url %}#{% else %}{{ entry.get_admin_url }}{% endif %}">
+                                      <i class="icon-{% if entry.is_addition %}plus{% endif %}{% if entry.is_change %}edit{% endif %}{% if entry.is_deletion %}remove{% endif %}"></i>
+                                      {{ entry.object_repr }}
+                                      {% if entry.content_type %}
+                                      <span class="mini quiet">({% filter capfirst %}{% trans entry.content_type.name %}{% endfilter %})</span>
+                                      {% else %}
+                                      <span class="mini quiet">({% trans 'Unknown content' %})</span>
+                                      {% endif %}
+                                  </a>
+                              </li>
+                              {% empty %}
+                              <li class="disabled"><a href="#">{% trans 'None available' %}</a></li>
+                              {% endfor %}
+                          </ul>
+                      </li>
+                      {% endblock %}
+                      {% endcomment %}
+                      {% block userlinks %}
+                      {% url 'django-admindocs-docroot' as docsroot %}
+                      {% if docsroot %}
+                      <li class="divider-vertical"></li>
+                      <li><a href="{{ docsroot }}">{% trans 'Documentation' %}</a></li>
+                      {% endif %}
+                      {% endblock %}
+                      {% endif %}{# user.is_staff #}
+                    </ul>
+                  </div>
+                {% else %}{# not user.is_active #}
+                  {% block login-controls %}
+                    <a href="{% url 'login' %}" id="login-button" type="button" class="btn btn-primary btn-sm">Log in</a>
+                  {% endblock login-controls %}
+                {% endif %}
+              {% endblock nav-form %}
+            </form>
+            <ul class="nav navbar-nav navbar-right">
+                {% block app_selector %}
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">apps <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      {% for app, url_name in available_apps.items %}
+                        <li><a href="{% url url_name %}">{{ app.label | title }}</a></li>
+                      {% endfor %}
+                    </ul>
+                </li>
+                {% endblock app_selector %}
+            </ul>
+            {% endblock header-navbar %}
+        </div>
+    </div>
+</nav>
+<!-- END Header -->
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <ol class="breadcrumb">
+        <li><a href="/">{% trans "Home" %}</a></li>
+        {% for label, url in view.get_breadcrumbs %}
+          <li{% if forloop.last %} class="active"{% endif %}>
+            {% if url %}<a href="{{ url }}">{% endif %}
+            {% trans label %}
+            {% if url %}</a>{% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</div>
+{% endblock breadcrumbs %}
+
+{% block containers %}
+<div class="container-fluid">
+  <div class="row">
+     <div class="col-sm-12">
+     {% block content %}
+     {{ block.super }}{# content #}
+     {% endblock content %}
+     </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="text/javascript">
+//<![CDATA[
+        (function($) {
+            $(document).ready(function() {
+                $('input[type="submit"]').addClass('btn');
+                $('[title]').tooltip();
+            });
+        }(jQuery));
+//]]>
+</script>
+{% endblock scripts %}

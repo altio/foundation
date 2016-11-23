@@ -1,0 +1,15 @@
+{% load i18n %}
+
+<div id="login-form-content">
+  <input type="hidden" name="this_is_the_login_form" value="1" />
+  <input type="hidden" name="next" value="{{ next }}" />
+  {{ form.as_p }}
+  {% url 'admin_password_reset' as password_reset_url %}
+  {% if password_reset_url %}
+  <div class="form-group">
+    <div class="controls col-sm-offset-2 col-sm-10">
+        <a href="{{ password_reset_url }}">{% trans 'Forgot your Username or Password?' %}</a>
+    </div>
+  </div>
+  {% endif %}
+</div>

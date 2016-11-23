@@ -1,0 +1,7 @@
+{% extends "detail.html" %}
+
+{% block object %}
+{% with blog.post_set.all as object_list %}
+{% include "list/tabular.html" %}
+{% endwith %}
+{% endblock object %}

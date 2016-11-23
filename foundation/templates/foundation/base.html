@@ -1,0 +1,75 @@
+{% load i18n sekizai_tags %}<!DOCTYPE html>{# admin #}
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}{# admin #}
+{% spaceless %}
+<html {% block htmlattr %}
+        class="{% block htmlclass %}{% endblock %}"
+        lang="{{ LANGUAGE_CODE|default:"en-us" }}"
+        {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}
+      {% endblock %}>{# admin #}
+{% endspaceless %}
+<head>{# admin #}
+{% block meta %}{% endblock %}
+<title>{% block title %}{% endblock %}</title>{# admin #}
+{% block stylesheets %}{{ media.css }}{% endblock %}
+{% block extrastyle %}{% endblock %}{# admin #}
+{% render_block 'css' %}
+{% block extrahead %}{% endblock %}{# admin #}
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}{# admin #}
+</head>
+
+<body {% block bodyattr %}class="{% block bodyclass %}{% endblock %}"{% endblock %}>{# admin #}
+
+  {% block body %}
+
+    {% block header_element %}
+    <header {% block headerattr %}class="{% block headerclass %}{% endblock %}"{% endblock %}>
+      {% block header %}
+      <div>
+      {# This is not a guarantee... make it conditional #}
+      <a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a>
+      {% for app, url_name in available_apps.items %}
+        {% if not forloop.last %}&nbsp;|&nbsp;{% endif %}
+        <a href="{% url url_name %}">{{ app.label | title }}</a>
+      {% endfor %}
+      </div>
+      {% endblock %}
+    </header>
+    {% endblock header_element %}
+
+    {% block breadcrumbs %}
+    <div class="breadcrumbs">
+      <a href="/">{% trans "Home" %}</a>
+      {% for label, url in view.get_breadcrumbs %}
+        &nbsp;&rsaquo;&nbsp;
+        {% if url %}<a href="{{ url }}">{% endif %}
+        {{ label | title }}
+        {% if url %}</a>{% endif %}
+      {% endfor %}
+    </div>
+    {% endblock breadcrumbs %}
+
+    {% block containers %}
+    {% block messages %}{% endblock %}{# admin #}
+    {% block content_element %}
+    <section {% block contentattr %}class="{% block contentclass %}{% endblock %}"{% endblock %}>
+      {% block content %}{% endblock %}
+    </section>
+    {% endblock content_element %}
+    {% endblock containers %}
+
+    {% block footer_element %}
+    <footer {% block footerrattr %}class="{% block footerclass %}{% endblock %}"{% endblock %}>
+      {% block footer %}{% endblock %}
+    </footer>
+    {% endblock footer_element %}
+
+  {% endblock body %}
+
+{% block modals %}{% endblock %}
+
+{% block scripts %}{{ media.js }}{% endblock %}
+{% render_block 'js' %}
+
+</body>
+
+</html>

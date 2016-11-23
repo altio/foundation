@@ -1,0 +1,69 @@
+a.navbar-brand {
+  padding-left: 25px;
+}
+
+.panel {
+  background-color: rgba(255,255,255,0.6);
+  border-radius: 10px;
+}
+
+.panel-default>.panel-heading {
+  background-color: rgba(255,255,255,0.5);
+  background-image: none;
+}
+
+#home {
+  margin-top: 3000px;
+  -webkit-transition: margin-top 1s ease;
+  transition: margin-top 1s ease;
+}
+
+.trailing-space {
+  margin-bottom: 100px;
+}
+/*
+.well-system {
+  margin-bottom: 0px;
+}
+*/
+.row {
+  padding-top: 10px;
+}
+
+/* color and bolden links */
+nav.navbar-inverse
+.navbar-nav>li>a {
+  font-weight: 600;
+  color: #a0a0a0; /*#4870cc;*/
+}
+
+body {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+
+.text-inverted {
+  color: white;
+  text-shadow: 0px 0px 6px #000000;
+}
+
+.navbar {
+  margin-bottom: 0;
+}
+
+/* Remove horizonal line from table */
+table.table>tbody>tr>td {
+  border-top: none;
+}
+table.table {
+  margin-bottom: 0px;
+}
+
+.glyphicon {
+  font-size: 48px;
+  color: white;
+}
+
+div>i.fa {
+  font-size: 30px;
+}

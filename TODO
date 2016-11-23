@@ -1,0 +1,117 @@
+General:
+
+- Docs
+- Tests
+- Fix breadcrumbs again...def should be one of the first tests since it checks
+the resolver logic as well.
+
+Specifically:
+
+BoundField
+- is_first used?  leftover from readonlybound field?
+- is_readonly used/useful
+- build out proxy field concept via boundfield
+- ensure errors working as intended from BF to field to FieldLine to FieldSet to Form
+
+Fieldline
+- conditionally returned a ROF or AdminField (wrapped BF) based on whether in ROF list -- reinstate behavior
+- flagged whether field is first for when that is important
+
+BoundField represents a form Field which is bound to a Form instance, regardless of whether data exists.
+- First-aware
+- Readonly-aware
+- Controller-aware
+- Is Checkbox aware
+- Override label_tag, add contents
+
+Form Fields overrides get_bound_field to allow for view-specific BF configuration, which in turn provides per-field formfield and widget callbacks.
+
+Fieldline represents one or more fields on a line and how to render each case.
+
+Fieldset represents one or more fieldlines in a set and how to render each.
+
+Inline fieldset skips iteration of the FK for an inline formset.
+- TODO: Conditionally do NOT skip this when a) acting as SU and b) a root controller (allows to choose attribution).
+
+- Move view dict to DRF view sets.
+- Rename groupings of views from public/private to display/editing -- tip off
+  controllers on how to render.  This is more in line with providing forms with
+  display-only, editable, or both components on a page so that individual fields
+  can be edited and AJAX calls can be made.
+
+Question: Current plan for design is to containerize all of the form stuff into
+a FormViewSet and then allow for additional ViewSets to be amended to a
+controller.  duplicate url patterns under /ajax/ or
+/rest/ depending on what is being implemented.  Is there a normal convention
+that permits AJAX POST to same URLs as one expecting HTML form and handles
+responses in a streamlined way?  Certainly AJAX GETs serving JSON responses
+or async GETs for partial html need their own namespacing, so it seems better
+not to do any POST request routing based on content-type or whatever and just
+roll with a separate URL namespace. 
+
+Re-implement addition widgets with popup behavior
+
+Template loader implemented to look in app directories for anything in following paths:
+
+/app_label/model_name/ ONLY in current app_label templates dir for model overrides
+/app_label/ ONLY in current app_label templates dir for app overrides
+/backend/ in all app template dirs for global backend overrides
+/ in all app template dirs for global overrides
+
+- Consider removing #3 "backend/"... adds unnecessary depth (and 2x path lookups)
+
+TODO memoize view (and form) class composition?
+
+TODO convert views dict to ViewSet
+
+
+# TODO: eventually we could consider putting the FK name on the URL path
+# and thus supporting multiple FK names for *query* purposes and then let
+# the single-object (in-focus) object discern which FK it is using
+# FOR NOW, let's maintain a single FK since that is more typical
+
+
+"""
+TODO: look into the intent of this
+if not qs.query.select_related:
+    qs = self.apply_select_related(qs)
+
+"""
+
+# TODO: lean on configurable pk/slug_field
+# TODO: add a build-time error if controller patterns yield slug
+# uniqueness constraints that differ from model contraints.
+# i.e. post has a slug, post is subordinated to blog and to user,
+# e.g. /tom/blogs/food/posts/apples and /tom/posts/apples 
+# ergo post must have (owner, slug) and (blog, slug)
+
+
+TODO: Issue dev warning if we get here?  On one hand, None is used
+to indicated there was no path.  On the other hand, such a silent
+fail could be hard to debug
+
+TODO: Since we did not proceed with controller meta, consider flattening controller options
+
+TODO: Allow parent controller to provide access to a form repr of object for use on pages (e.g. selector for admin as su)
+
+TODO: allow render of list/single object view using form designs as upstream but rendering "simple fields" as text w labels
+
+Do general review and reconciliation with admin behaviors on fields to ensure uniform/imporoved behavior.
+
+Re-introduce widgets
+
+# TODO: consider request field whitelist (e.g. user-controlled)
+# TODO: consider view field whitelist
+# TODO: consider controller mode fields (with fallback)
+# TODO: for list mode, consider formset fallback?
+# TODO: for all modes, consider form fallback
+# TODO: rinse-wash-repeat for exclude
+
+
+# NOTE: This gets called as a helper to get_form_class_kwargs. Recurring
+# here is avoided by ensuring fields=None is passed to that method.
+# TODO: remove
+# if fields is None:
+#     form = self.get_formset_class(view, obj, fields=None).form
+#     fields = list(form.base_fields) + \
+#         list(self.get_readonly_fields(view, obj))

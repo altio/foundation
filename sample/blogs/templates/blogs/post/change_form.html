@@ -1,0 +1,6 @@
+{% extends 'change_form.html' %}
+
+{% block object %}
+{{ block.super }}
+<div>{{ object.body | safe }}</div>
+{% endblock object %}

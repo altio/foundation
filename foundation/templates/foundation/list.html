@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h2>
+    <span>
+       {{ view.get_title | title }}
+    </span>
+  </h2>
+
+  <div>
+    {% include 'inline/tabular.html' %}
+    {% block pagination %}{% if paginator %}{{ paginator }}{{% endif %}{% endblock %}
+  </div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{# expects to have form, fieldset, and fieldline in context #}
+
+<div class="{% block fieldlineclass %}{% endblock %}">
+{% block beforefieldline %}{% endblock %}
+{% for field in fieldline %}
+  {% block beforefield %}{% endblock %}
+  {% include 'includes/field.html' %}
+  {% block afterfield %}
+  {% if form.view.edit %}{{ field.errors.as_ul }}{% endif %}
+  {% if field.help_text %}
+    <p class="help">{{ field.help_text|safe }}</p>
+  {% endif %}
+  {% endblock %}
+{% endfor %}
+{% block afterfieldline %}{% endblock %}
+</div>

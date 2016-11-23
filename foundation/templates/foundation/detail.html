@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block content %}
+<div id="content-main">
+  <h2>
+    <span>{{ view.get_title | capfirst }}</span>
+  </h2>
+
+  <div class="panel panel-default">
+  <div class="panel-body">
+  {% block object %}
+  {% endblock object %}
+  </div></div>
+</div>
+{% endblock %}
