@@ -99,7 +99,22 @@ class BackendMixin(DispatchMixin):
         return super(BackendMixin, self).get_context_data(**kwargs)
 
 
-class AppAccessMixin(DispatchMixin):
+class AppMixin(BackendMixin):
+    app_config = None
+
+    def __init__(self, app_config, **kwargs):
+        self.app_config = app_config
+        super(AppMixin, self).__init__(**kwargs)
+
+    def get_context_data(self, **kwargs):
+        kwargs.update(
+            app_label=self.app_config.label,
+            app_name=self.app_config.verbose_name,
+        )
+        return super(AppMixin, self).get_context_data(**kwargs)
+
+
+class AppAccessMixin(AppMixin):
 
     def handle_common(self, handler, request, *args, **kwargs):
         """
@@ -123,19 +138,10 @@ class TemplateView(BackendMixin, base.TemplateView):
 
 class AppIndexView(AppAccessMixin, TemplateView):
     mode = "list"
-    app_config = None
-    backend = None
     template_name = 'app_index.html'
-
-    def __init__(self, app_config, backend, **kwargs):
-        self.app_config = app_config
-        self.backend = backend
-        super(AppIndexView, self).__init__(**kwargs)
 
     def get_context_data(self, **kwargs):
         kwargs.update(
-            app_label=self.app_config.label,
-            app_name=self.app_config.verbose_name,
             app_controllers=[self.backend.get_registered_controller(model)
                              for model in self.app_config.get_models()
                              if self.backend.has_registered_controller(model)],

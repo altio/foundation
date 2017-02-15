@@ -177,6 +177,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
                                 (model_urlpatterns, model_namespace)
                             )),
                     )
+            # add app-aware urls specified on the app config
+            app_urlpatterns.extend(
+                app_config.app_urls(self) if hasattr(app_config, 'app_urls') else []
+            )
 
             # create an app index view if a named view is not provided
             # TODO: this is being added unconditionally right now... what we
@@ -186,6 +190,8 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
             AppIndex = getattr(app_config, 'AppIndexView', views.AppIndexView)
             app_index = AppIndex.as_view(app_config=app_config, backend=self)
             app_urlpatterns.append(url(r'^$', app_index, name='index'))
+            # TODO: implement get_FOO_url for app_config
+            app_config.index_url_name = '{}:index'.format(app_namespace)
 
 
             # if the namespace exists we already appended/extended in place
@@ -225,13 +231,12 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
         available_apps = OrderedDict()
         for app_config in sorted(utils.get_project_app_configs(),
                                  key=lambda app_config: app_config.label):
-            app_label = None
+            is_visible = False
             if getattr(app_config, 'is_public', False):
-                app_label = app_config.label
+                is_visible = True
             elif user.has_module_perms(app_config.label):
-                app_label = app_config.label
-            if app_label:
-                available_apps[app_config] = '{}:index'.format(app_config.label)
+                is_visible = True
+            available_apps[app_config] = is_visible
 
         return available_apps
 

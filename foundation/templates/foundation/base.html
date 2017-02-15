@@ -27,9 +27,11 @@
       <div>
       {# This is not a guarantee... make it conditional #}
       <a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a>
-      {% for app, url_name in available_apps.items %}
-        {% if not forloop.last %}&nbsp;|&nbsp;{% endif %}
-        <a href="{% url url_name %}">{{ app.label | title }}</a>
+      {% for app, is_visible in available_apps.items %}
+        {% if is_visible and app.index_url_name %}
+           {% if not forloop.last %}&nbsp;|&nbsp;{% endif %}
+           <a href="{% url app.index_url_name %}">{{ app.label | title }}</a>
+        {% endif %}
       {% endfor %}
       </div>
       {% endblock %}
