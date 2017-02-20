@@ -114,7 +114,7 @@ class AppMixin(BackendMixin):
         return super(AppMixin, self).get_context_data(**kwargs)
 
 
-class AppAccessMixin(AppMixin):
+class AppAccessMixin(BackendMixin):
 
     def handle_common(self, handler, request, *args, **kwargs):
         """
@@ -136,7 +136,7 @@ class TemplateView(BackendMixin, base.TemplateView):
     """ Backend-aware TemplateView """
 
 
-class AppIndexView(AppAccessMixin, TemplateView):
+class AppIndexView(AppAccessMixin, AppMixin, TemplateView):
     mode = "list"
     template_name = 'app_index.html'
 
