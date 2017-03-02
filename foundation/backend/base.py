@@ -253,17 +253,3 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
             # 'has_permission': self.has_permission(view),
             'available_apps': self.get_available_apps(request),
         }
-
-
-# For now, a singleton list acting as a Backend Registry
-backends = []
-
-def get_backend():
-    """
-    Allow invocation of a Site elsewhere, fallback to a default Backend.
-    TODO: We probably want a Site-Backend Registry.
-    """
-    global backends
-    if not backends:
-        backends.append(Backend())
-    return backends[0]
