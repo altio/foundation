@@ -1,4 +1,4 @@
-from foundation.views import TemplateView
+from foundation.backend.views import TemplateView
 
 
 class SiteIndexView(TemplateView):

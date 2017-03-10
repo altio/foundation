@@ -1,4 +1,5 @@
-from foundation.urls import backends, Backend
+from foundation import backends
+from foundation.backend import Backend
 from django.conf import settings
 from django.utils import timezone
 from django.apps import AppConfig
@@ -12,7 +13,11 @@ class SiteConfig(AppConfig):
 
 class SiteBackend(Backend):
 
-    SiteIndex = SiteIndexView
+    routes = ('ahah', 'ajax', 'api')
+    views = (
+        'home'
+    )
+    site_index_class = SiteIndexView
     create_permissions = True
 
     class Media:

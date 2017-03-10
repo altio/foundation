@@ -39,30 +39,16 @@ Inline fieldset skips iteration of the FK for an inline formset.
   display-only, editable, or both components on a page so that individual fields
   can be edited and AJAX calls can be made.
 
-Question: Current plan for design is to containerize all of the form stuff into
-a FormViewSet and then allow for additional ViewSets to be amended to a
-controller.  duplicate url patterns under /ajax/ or
-/rest/ depending on what is being implemented.  Is there a normal convention
-that permits AJAX POST to same URLs as one expecting HTML form and handles
-responses in a streamlined way?  Certainly AJAX GETs serving JSON responses
-or async GETs for partial html need their own namespacing, so it seems better
-not to do any POST request routing based on content-type or whatever and just
-roll with a separate URL namespace. 
-
 Re-implement addition widgets with popup behavior
 
 Template loader implemented to look in app directories for anything in following paths:
 
 /app_label/model_name/ ONLY in current app_label templates dir for model overrides
 /app_label/ ONLY in current app_label templates dir for app overrides
-/backend/ in all app template dirs for global backend overrides
 / in all app template dirs for global overrides
 
-- Consider removing #3 "backend/"... adds unnecessary depth (and 2x path lookups)
 
 TODO memoize view (and form) class composition?
-
-TODO convert views dict to ViewSet
 
 
 # TODO: eventually we could consider putting the FK name on the URL path
@@ -89,8 +75,6 @@ if not qs.query.select_related:
 TODO: Issue dev warning if we get here?  On one hand, None is used
 to indicated there was no path.  On the other hand, such a silent
 fail could be hard to debug
-
-TODO: Since we did not proceed with controller meta, consider flattening controller options
 
 TODO: Allow parent controller to provide access to a form repr of object for use on pages (e.g. selector for admin as su)
 

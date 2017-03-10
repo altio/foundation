@@ -48,6 +48,9 @@ INSTALLED_APPS = PROJECT_APPS + [
 ]
 
 SITE_ID = 1  # needed by foundation
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

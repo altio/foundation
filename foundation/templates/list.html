@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}{{ block.super }} app-{{ view.app_label }} model-{{ view.model_name }} change-list{% endblock %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    {% comment %}
+    {% block search %}{% search_form cl %}{% endblock %}
+    {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
+
+    {% block filters %}
+      {% if cl.has_filters %}
+        <div id="changelist-filter">
+          <h2>{% trans 'Filter' %}</h2>
+          {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+        </div>
+      {% endif %}
+    {% endblock %}
+    {% endcomment %}
+      {% include formset.view.list_templates.tabular %}
+    {% block pagination %}{% endblock pagination %}
+    </form>
+  </div>
+
+
+{% endblock %}

@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(foundation.models.base.ControllerView, models.Model),
+            bases=(foundation.models.base.AssociativeMixin, models.Model),
             managers=[
                 ('objects', foundation.models.manager.Manager()),
             ],
@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                 'verbose_name': 'Blog Entry',
                 'verbose_name_plural': 'Blog Entries',
             },
-            bases=(foundation.models.base.ControllerView, models.Model),
+            bases=(foundation.models.base.AssociativeMixin, models.Model),
             managers=[
                 ('objects', foundation.models.manager.Manager()),
             ],
