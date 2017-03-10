@@ -1,4 +1,5 @@
-from foundation import register, Controller
+from foundation import forms, rest
+from foundation.decorators import register
 
 from . import models
 
@@ -9,18 +10,24 @@ class ViewMixin(object):
     dictionary on the controller. """
 
 
-class PostController(Controller):
+class APIFormController(forms.Controller):
 
-    # ViewMixin = ViewMixin
+    viewsets = {
+        None: forms.FormViewSet,
+        'api': rest.APIViewSet,
+    }
+
+
+class PostController(APIFormController):
+
+    # view_class_mixin = ViewMixin
 
     model = models.Post
     fields = ('blog', 'title', 'body')
 
 
 @register(models.Blog)
-class BlogController(Controller):
-
-    model = models.Blog
+class BlogController(APIFormController):
 
     # auth
     fk_name = 'owner'

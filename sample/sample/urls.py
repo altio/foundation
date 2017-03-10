@@ -1,7 +1,14 @@
-from foundation.urls import get_backend
 from django.conf.urls import include, url
 from django.contrib.admin import site as admin_site
 from django.contrib.auth import urls as auth_urls
+
+from foundation import get_backend
+from foundation.decorators import backend_context
+
+auth_urlpatterns = []
+for auth_urlpattern in auth_urls.urlpatterns:
+    auth_urlpattern.callback = backend_context(auth_urlpattern.callback)
+    auth_urlpatterns.append(auth_urlpattern)
 
 urlpatterns = [
     url(r'^admin/', include(admin_site.urls)),

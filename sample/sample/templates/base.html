@@ -34,7 +34,7 @@
                       <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> Delete</a></li>
                       <li><a href="#"><i class="fa fa-ban fa-fw"></i> Ban</a></li>
                       <li class="divider"></li>
-                      {% if user.is_superuser %}     
+                      {% if user.is_superuser %}
                          {% if request.session.act_as_superuser %}
                          <li><a href="{{request.path}}"><i class="i"></i> Remove superuser</a></li>
                          {% else %}
@@ -104,8 +104,10 @@
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">apps <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                      {% for app, url_name in available_apps.items %}
-                        <li><a href="{% url url_name %}">{{ app.label | title }}</a></li>
+                      {% for app, app_index in available_apps.items %}
+                        {% if app_index %}
+                        <li><a href="{{ app_index }}">{{ app.label | title }}</a></li>
+                        {% endif %}
                       {% endfor %}
                     </ul>
                 </li>
