@@ -5,7 +5,7 @@ from ...controller import BaseController
 from .accessor import PermissionsMixin
 from .resolver import ChainingMixin
 
-__all__ = 'BaseViewController',
+__all__ = 'BaseViewController', 'ParentController'
 
 
 class BaseViewController(ChainingMixin, PermissionsMixin, BaseController):
@@ -40,3 +40,20 @@ class BaseViewController(ChainingMixin, PermissionsMixin, BaseController):
     @property
     def view(self):
         return self._view
+
+
+class ParentController(MultipleObjectMixin, SingleObjectMixin, BaseViewController):
+    """
+    A View-Aware controller representing one of the parents in the chain of
+    objects providing access to the current view.
+    """
+
+    def __init__(self, view, controller, kwargs):
+        """
+        Parent Controllers will always have:
+        view - View instance from which this ParentController was instantiated
+        controller - the registered parent controller this relates to
+        kwargs - the reduced view kwargs which act as the object lookup
+        """
+        super(ParentController, self).__init__(view=view, controller=controller)
+        self.kwargs = kwargs
