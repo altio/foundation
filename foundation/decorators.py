@@ -1,5 +1,14 @@
-from .backend import Backend, get_backend
-from .controller import Controller
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from functools import wraps
+
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.utils.decorators import available_attrs
+
+from . import get_backend
+from .backend import Backend, Controller
+from .utils import redirect_to_url
 
 __all__ = 'backend_context', 'register'
 
@@ -57,3 +66,21 @@ def register(*models, **kwargs):
 
         return controller_class
     return _controller_class_wrapper
+
+
+def request_passes_test(test_func, redirect_url=None,
+                        redirect_field_name=REDIRECT_FIELD_NAME):
+    """
+    Decorator for views that checks that the request passes the given test,
+    redirecting to the redirect url if necessary. The test should be a
+    callable that takes the request and returns True if the test passes.
+    """
+
+    def decorator(view_func):
+        @wraps(view_func, assigned=available_attrs(view_func))
+        def _wrapped_view(request, *args, **kwargs):
+            if test_func(request):
+                return view_func(request, *args, **kwargs)
+            return redirect_to_url(request, redirect_url, redirect_field_name)
+        return _wrapped_view
+    return decorator

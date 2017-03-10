@@ -96,7 +96,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
         """
         from django.db.models.base import ModelBase
         if not controller_class:
-            from .controller import Controller
+            from .controllers import Controller
             controller_class = Controller
         if isinstance(model_or_iterable, ModelBase):
             model_or_iterable = [model_or_iterable]
@@ -113,32 +113,18 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
         if not existing_patterns:
             urlpatterns = []
         from django.conf.urls import url, include
-        # Since this module gets imported in the application's root package,
-        # it cannot import models from other applications at the module level,
-        # and django.contrib.contenttypes.views imports ContentType.
-        from django.contrib.contenttypes import views as contenttype_views
-
-        def urlpatterns_in_namespace(urlpatterns, namespace):
-            """ Given a list of url patterns and a namespace to look for,
-            return a reference to the list of url patterns attached to the
-            namespace (if found) or an empty list, and a boolean indicating
-            whether the namespace already existed. """
-            namespace_urlpatterns = []
-            namespace_exists = False
-            for resolver in urlpatterns:
-                if getattr(resolver, 'namespace', None) == namespace:
-                    namespace_urlpatterns = resolver.url_patterns
-                    namespace_exists = True
-                    break
-            return namespace_urlpatterns, namespace_exists
 
         # URL auto-loader traverses all installed apps
         for app_config in utils.get_project_app_configs():
             app_namespace = getattr(app_config,
                                     'url_namespace',
                                     app_config.label)
-            app_urlpatterns, app_namespace_exists = \
-                urlpatterns_in_namespace(urlpatterns, app_namespace)
+            app_urlpatterns = utils.namespace_in_urlpatterns(
+                urlpatterns, app_namespace
+            )
+            existing_patterns = bool(app_urlpatterns)
+            if not existing_patterns:
+                model_urlpatterns = []
 
             # only auto-load app URLs if defined
             if not existing_patterns:
@@ -152,8 +138,12 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
 
             for model in app_config.get_models():
                 model_name = model._meta.model_name
-                model_urlpatterns, model_namespace_exists = \
-                    urlpatterns_in_namespace(app_urlpatterns, model_name)
+                model_urlpatterns = utils.namespace_in_urlpatterns(
+                    app_urlpatterns, model_name
+                )
+                model_namespace_exists = bool(model_urlpatterns)
+                if not model_urlpatterns:
+                    model_urlpatterns = []
                 try:
                     controller = self.get_registered_controller(model)
                 except NotRegistered:

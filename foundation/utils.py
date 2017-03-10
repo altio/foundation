@@ -6,16 +6,58 @@ from collections import defaultdict
 
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.db.models.deletion import Collector
 from django.forms.utils import pretty_name
+from django.http import HttpResponseRedirect, QueryDict
+from django.shortcuts import resolve_url
 from django.utils import formats, six, timezone
 from django.utils.encoding import force_str, force_text, smart_text
 from django.utils.html import format_html
+from django.utils.six.moves.urllib.parse import urlparse, urlunparse
 from django.utils.text import capfirst
 from django.urls.base import reverse
 from django.urls.exceptions import NoReverseMatch
+
+
+def redirect_to_url(request, url, redirect_field_name=REDIRECT_FIELD_NAME):
+    """
+    Redirects the requester to url, passing the requested URL as 'next'.
+    'url' can be anything receivable by resolve_url
+
+    NOTE: This is based on the combined behavior auth's redirect_to_login and
+    logic nested in user_passes_test without the limitations of checking
+    request.user and path-only url resolution.
+    """
+    intended_url = request.build_absolute_uri()
+    redirect_url = resolve_url(url)
+    redirect_url_parts = list(urlparse(redirect_url))
+    redirect_scheme, redirect_netloc = redirect_url_parts[:2]
+    intended_scheme, intended_netloc = urlparse(intended_url)[:2]
+    if ((not redirect_scheme or redirect_scheme == intended_scheme) and
+            (not redirect_netloc or redirect_netloc == intended_netloc)):
+        intended_url = request.get_full_path()
+
+    if redirect_field_name:
+        querystring = QueryDict(redirect_url_parts[4], mutable=True)
+        querystring[redirect_field_name] = intended_url
+        redirect_url_parts[4] = querystring.urlencode(safe='/')
+
+    return HttpResponseRedirect(urlunparse(redirect_url_parts))
+
+
+def namespace_in_urlpatterns(urlpatterns, namespace):
+    """ Given a list of url patterns and a namespace to look for,
+    returns the list of url patterns found attached to the namespace (if found)
+    or None. """
+    namespace_urlpatterns = None
+    for resolver in urlpatterns:
+        if getattr(resolver, 'namespace', None) == namespace:
+            namespace_urlpatterns = resolver.url_patterns
+            break
+    return namespace_urlpatterns
 
 
 def get_content_type_for_model(obj):
@@ -40,7 +82,7 @@ def get_project_app_configs():
 
 def quote(s):
     """
-    Ensure that primary key values do not confuse the admin URLs by escaping
+    Ensure that primary key values do not confuse the URL patterns by escaping
     any '/', '_' and ':' and similarly problematic characters.
     Similar to urllib.quote, except that the quoting is slightly different so
     that it doesn't get automatically unquoted by the Web browser.
