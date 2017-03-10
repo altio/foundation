@@ -1,27 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import re
-
-from functools import partial
-
-from django.contrib.auth import get_permission_codename
 from django.utils.functional import cached_property
 
-__all__ = 'PermissionsMixin',
+from ..base import AppPermissionsMixin
 
 
-RE_MODE_PERMISSION = re.compile('has_(?P<mode>\w+)_permission')
-
-
-def get_full_permission_codename(action, opts):
-    action_map = {'edit': 'change'}
-    if action in action_map:
-        action = action_map[action]
-    return '{}.{}'.format(opts.app_label, get_permission_codename(action, opts))
-
-
-class PermissionsMixin(object):
+class ModelPermissionsMixin(AppPermissionsMixin):
 
     def get_permissions_model(self):
         return self.model
@@ -60,13 +45,13 @@ class PermissionsMixin(object):
 
     def get_model_perms(self, view):
         return {
-            'add': self.has_add_permission(view),
-            'change': self.has_edit_permission(view),
-            'delete': self.has_delete_permission(view),
+            'add': self.has_permission('add'),
+            'change': self.has_permission('change'),
+            'delete': self.has_permission('delete'),
         }
 
     def has_module_perm(self, view):
-        has_module_perm = view.request.has_module_perms(self.opts.app_label)
+        has_module_perm = view.request.has_module_perms(self.app_label)
         return has_module_perm
 
     @cached_property
@@ -92,7 +77,7 @@ class PermissionsMixin(object):
         return user.is_superuser
 
     def get_queryset(self):
-        queryset = super(PermissionsMixin, self).get_queryset()
+        queryset = super(ModelPermissionsMixin, self).get_queryset()
 
         # auth constrain when:
         # - app is NOT public
@@ -104,13 +89,3 @@ class PermissionsMixin(object):
                 queryset = queryset.filter(**{auth_query: user})
 
         return queryset
-
-    def __getattribute__(self, name):
-        super_getattr = super(PermissionsMixin, self).__getattribute__
-
-        mode_url = re.match(RE_MODE_PERMISSION, name)
-        if mode_url:
-            method = super_getattr('has_permission')
-            return partial(method, mode=mode_url.group('mode'))
-
-        return super_getattr(name)

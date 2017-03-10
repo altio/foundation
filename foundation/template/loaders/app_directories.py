@@ -35,9 +35,6 @@ def get_app_template_dirs(dirname, app_label=None, model_name=None):
                         if os.path.isdir(model_dir):
                             priority_dirs.append(upath(model_dir))
                     priority_dirs.append(upath(app_dir))
-            foundation_dir = os.path.join(template_dir, 'foundation')
-            if os.path.isdir(foundation_dir):
-                template_dirs.append(upath(foundation_dir))
             template_dirs.append(upath(template_dir))
     # Immutable return value because it will be cached and shared by callers.
     return tuple(priority_dirs + template_dirs)

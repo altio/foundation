@@ -5,59 +5,27 @@ import logging
 
 from collections import OrderedDict
 from django.conf import settings
-from django.core.exceptions import ViewDoesNotExist
 from django.forms.widgets import MediaDefiningClass
-from django.urls.resolvers import LocaleRegexURLResolver, RegexURLResolver,\
-    RegexURLPattern
-from django.utils import six, translation
+from django.utils import six
 from django.utils.functional import cached_property
 
 from .. import utils
-from .registry import Registry, NotRegistered
+from .registry import NotRegistered
+from .router import Router
+from django.conf.urls import url, include
+from django.shortcuts import resolve_url
+from django.urls.exceptions import NoReverseMatch
 
-__all__ = 'Backend', 'backends', 'get_backend'
+__all__ = 'Backend',
 
 logger = logging.getLogger(__name__)
 
 
-def render(urlpatterns, base='', namespace=None, depth=0):
-
-    views = {'patterns': {}, 'resolvers': {}}
-    for p in urlpatterns:
-        if isinstance(p, RegexURLPattern):
-            try:
-                if not p.name:
-                    name = p.name
-                elif namespace:
-                    name = '{0}:{1}'.format(namespace, p.name)
-                else:
-                    name = p.name
-                print('{}({}) {}'.format(('| '*(depth-1) + '|-') if depth else '', name, p.regex.pattern))
-            except ViewDoesNotExist:
-                continue
-        elif isinstance(p, RegexURLResolver):
-            try:
-                patterns = p.url_patterns
-            except ImportError:
-                continue
-            if namespace and p.namespace:
-                _namespace = '{0}:{1}'.format(namespace, p.namespace)
-            else:
-                _namespace = (p.namespace or namespace)
-            print('{}({}) {}'.format(('| '*(depth-1) + '|-') if depth else '', _namespace, p.regex.pattern))
-            if isinstance(p, LocaleRegexURLResolver):
-                for langauge in settings.LANGUAGES:
-                    with translation.override(langauge[0]):
-                        render(patterns, base + p.regex.pattern, namespace=_namespace, depth=depth+1)
-            else:
-                render(patterns, base + p.regex.pattern, namespace=_namespace, depth=depth+1)
-
-    return views
-
-
-class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
+class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
     create_permissions = False
+    routes = ()
+    site_index_class = None
 
     @property
     def site(self):
@@ -78,6 +46,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
         self._actions = {'delete_selected': actions.delete_selected}
         self._global_actions = self._actions.copy()
         '''
+        self.backend = self
         super(Backend, self).__init__(*args, **kwargs)
 
     def register(self, model_or_iterable, controller_class=None, **options):
@@ -103,113 +72,92 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
         for model in model_or_iterable:
             super(Backend, self).register(controller_class, model, **options)
 
-    def get_urls(self, urlpatterns=None):
+    @cached_property
+    def _routes(self):
+        return set(self.routes) | set((None,))
+
+    def get_app_urlpatterns(self, app_config):
+
+        # set backend on app_config since may be using django appconfigs and the
+        # kwargs build-out for AppViewSets will look to AppConfig for backend
+        app_config.backend = self
+        urlpatterns = super(Backend, self).get_urlpatterns(
+            source=app_config, app_config=app_config)
+
+        # start by getting all controller urlpatterns in-depth
+        for model in app_config.get_models():
+            try:
+                controller = self.get_registered_controller(model)
+            except NotRegistered:
+                continue
+
+            controller_namespace = controller.model_namespace
+            controller_prefix = controller.url_prefix
+
+            # get named patterns from controller and extend 
+            controller_urlpatterns = controller.get_urlpatterns()
+            for name, patterns in controller_urlpatterns.items():
+                urlpatterns[name].append(
+                    url((r'^{prefix}'.format(prefix=controller_prefix)
+                         if controller_prefix
+                         else ''),
+                        include((patterns, controller_namespace))
+                    ),
+                )
+
+        return urlpatterns
+
+    def get_urlpatterns(self, urlpatterns=None):
         """
         May be linked to ROOT_URLCONF directly or used to extend URLs from an
         existing urls.py file.  If it is extending patterns, auto-loading
-        of urls.py files is disabled since that should have been done already.
+        of urls.py files is disabled since that should be managed manually.
         """
-        existing_patterns = urlpatterns is not None
-        if not existing_patterns:
-            urlpatterns = []
-        from django.conf.urls import url, include
+
+        # gets the set of named urlpatterns from this controller's viewsets
+        urlpatterns = super(Backend, self).get_urlpatterns(self)
 
         # URL auto-loader traverses all installed apps
         for app_config in utils.get_project_app_configs():
             app_namespace = getattr(app_config,
                                     'url_namespace',
                                     app_config.label)
-            app_urlpatterns = utils.namespace_in_urlpatterns(
-                urlpatterns, app_namespace
-            )
-            existing_patterns = bool(app_urlpatterns)
-            if not existing_patterns:
-                model_urlpatterns = []
-
-            # only auto-load app URLs if defined
-            if not existing_patterns:
-                # attempt to append from the app's URLs
-                try:
-                    app_urlpatterns.append(
-                        url(r'', include(r'{}.urls'.format(app_config.name)))
-                    )
-                except ImportError:
-                    pass
-
-            for model in app_config.get_models():
-                model_name = model._meta.model_name
-                model_urlpatterns = utils.namespace_in_urlpatterns(
-                    app_urlpatterns, model_name
-                )
-                model_namespace_exists = bool(model_urlpatterns)
-                if not model_urlpatterns:
-                    model_urlpatterns = []
-                try:
-                    controller = self.get_registered_controller(model)
-                except NotRegistered:
-                    controller = None
-                else:
-                    controller.url_app_namespace = app_namespace
-                    model_urlpatterns.extend(controller.urls)
-
-                # if the namespace exists we already appended/extended in place
-                if model_urlpatterns and not model_namespace_exists:
-                    if controller:
-                        model_namespace = controller.model_namespace
-                        model_prefix = controller.url_prefix
-                    else:
-                        model_namespace = model._meta.model_name
-                        model_prefix = model._meta.verbose_name_plural.lower(
-                            ).replace(' ', '-')
-                    app_urlpatterns.append(
-                        url(('^{}'.format(model_prefix)
-                             if model_prefix else ''), include(
-                                (model_urlpatterns, model_namespace)
-                            )),
-                    )
-            # add app-aware urls specified on the app config
-            app_urlpatterns.extend(
-                app_config.app_urls(self) if hasattr(app_config, 'app_urls') else []
-            )
-
-            # create an app index view if a named view is not provided
-            # TODO: this is being added unconditionally right now... what we
-            # really want to do is see if an index was specified (naturally or
-            # explcitly) and only add this if we do not have one
-            from .. import views
-            AppIndex = getattr(app_config, 'AppIndexView', views.AppIndexView)
-            app_index = AppIndex.as_view(app_config=app_config, backend=self)
-            app_urlpatterns.append(url(r'^$', app_index, name='index'))
-            # TODO: implement get_FOO_url for app_config
-            app_config.index_url_name = '{}:index'.format(app_namespace)
-
-
-            # if the namespace exists we already appended/extended in place
-            if app_urlpatterns and not app_namespace_exists:
-                urlprefix = getattr(app_config, 'url_prefix', app_config.label)
-                urlprefix = (r'^{}/'.format(urlprefix)
-                             if urlprefix is not None and urlprefix != ''
-                             else r'')
-                urlpatterns.append(
+            urlprefix = getattr(app_config, 'url_prefix', app_config.label)
+            urlprefix = (r'^{}/'.format(urlprefix)
+                         if urlprefix is not None and urlprefix != ''
+                         else r'')
+            app_urlpatterns = self.get_app_urlpatterns(app_config)
+            for name, patterns in app_urlpatterns.items():
+                urlpatterns[name].append(
                     url(urlprefix, include(
-                        (app_urlpatterns, app_namespace)))
+                        (patterns, app_namespace)))
                 )
 
-        SiteIndex = getattr(self, 'SiteIndex', None)
-        if SiteIndex:
-            urlpatterns.append(
+        # add a site index if one was provided
+        if self.site_index_class:
+            urlpatterns[None].append(
                 url(r'^$',
-                    SiteIndex.as_view(backend=self),
+                    self.site_index_class.as_view(backend=self),
                     name='home')
             )
 
-        # render(urlpatterns)
+        # flatten urlpatterns
+        for key in urlpatterns:
+            if key is not None:
+                urlpatterns[None].append(
+                    url(r'^{}/'.format(key),
+                        include((urlpatterns[key], key))),
+                )
+        urlpatterns = urlpatterns.pop(None, [])
 
         return urlpatterns
 
     @cached_property
     def urls(self):
-        return self.get_urls()  # , 'admin', 'admin'
+        """
+        Shortcut for referencing backend URLs as ROOT_URLCONF
+        """
+        return self.get_urlpatterns()
 
     def get_available_apps(self, request):
         """
@@ -226,6 +174,11 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
                 is_visible = True
             elif user.has_module_perms(app_config.label):
                 is_visible = True
+            if is_visible:
+                try:
+                    is_visible = resolve_url(app_config.label + ':index')
+                except NoReverseMatch:
+                    is_visible = False
             available_apps[app_config] = is_visible
 
         return available_apps
@@ -238,8 +191,5 @@ class Backend(six.with_metaclass(MediaDefiningClass, Registry)):
 
         return {
             'site_title': self.site_title,
-            # 'site_header': self.site_header,
-            # 'site_url': self.site_url,
-            # 'has_permission': self.has_permission(view),
             'available_apps': self.get_available_apps(request),
         }

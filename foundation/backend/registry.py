@@ -47,19 +47,19 @@ class Registry(object):
         where a Registry will be a Backend, Controller, or child Controller.
         """
         # ensure the base either had a model or one was passed
-        if controller_class.opts.model:
-            if model and model != controller_class.opts.model:
+        if controller_class.model:
+            if model and model != controller_class.model:
                 raise ValueError(
                     'You cannot use a Controller with a "model" specified as '
                     'a generic Controller class.'
                 )
-            model = controller_class.opts.model
+            model = controller_class.model
         else:
             if not model:
                 raise ValueError(
                     'You must provide a "model" for this Controller.'
                 )
-            controller_class.opts.model = model
+            controller_class.model = model
 
         if model._meta.abstract:
             raise ImproperlyConfigured(
@@ -67,15 +67,9 @@ class Registry(object):
                 'with a controller.'.format(model.__name__)
             )
 
-        # Ignore the registration if the model has been
-        # swapped out.
+        # Ignore the registration if the model has been swapped out.
         if not model._meta.swapped:
-            # If we got **options then dynamically construct a subclass of
-            # admin_class with those **options.
             if options:
-                # For reasons I don't quite understand, without a
-                # __module__ the created class appears to "live" in the
-                # wrong place, which causes issues later on.
                 options['__module__'] = __name__
                 controller_class = type(
                     "%sController" % model.__name__,
@@ -95,14 +89,13 @@ class Registry(object):
             for child_controller_class in controller_class.children:
 
                 if child_controller_class.force_backend_as_registrar:
-                    child_model = child_controller_class.opts.model
+                    child_model = child_controller_class.model
                     controller_obj.backend.register(child_model,
                                                     child_controller_class,
                                                     parent=controller_obj)
                 else:
                     controller_obj.register(child_controller_class,
                                             parent=controller_obj)
-
 
     def unregister(self, model_or_iterable):
         """

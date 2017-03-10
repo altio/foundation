@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from ..views import controllers
-from .registry import Registry
+from django.conf.urls import url, include
+
+from .controller import BaseController
 from .router import Router
 
 __all__ = 'Controller',
 
 
-class ControllerOptions(object):
+class Controller(Router, BaseController):
+    """
+    Controllers need the ability to:
+    a) generate the URLs needed for the Backend
+    b) generate the JIT (View, Inline, and Parent) Controller for each View
+    """
 
     fields = None
     exclude = None
@@ -17,68 +23,12 @@ class ControllerOptions(object):
     model = None
     ordering = None
 
-    modelform_class = forms.ModelForm
-    formset_class = forms.BaseModelFormSet
-    formset_template = 'inline/tabular.html'
-
-    # unevaluated
-    raw_id_fields = ()
-
-    filter_vertical = ()
-    filter_horizontal = ()
-    radio_fields = {}
-    prepopulated_fields = {}
-    formfield_overrides = {}
-    readonly_fields = ()
-    view_on_site = True  # TODO: remove see below
-    show_full_result_count = True
-
-    # can_delete = True
-    show_change_link = False
-    classes = None
-
-    def update(self, attrs):
-        for key in dir(self):
-            if not key.startswith('_'):
-                setattr(self, key, attrs.pop(key, getattr(self, key)))
-
-    def __init__(self, attrs):
-        super(ControllerOptions, self).__init__()
-        self.update(attrs)
-
-    def __getattribute__(self, name):
-        """
-        When an attribute is not found, attempt to pass-through to the Model
-        Meta (Options).
-        """
-
-        super_getattr = super(ControllerOptions, self).__getattribute__
-        model = super_getattr('model')
-        try:
-            return super_getattr(name)
-        except AttributeError as e:
-            try:
-                return getattr(model._meta, name)
-            except AttributeError:
-                raise e
-
-
-class Controller(Router, Registry, controllers.BaseController):
-    """
-    Controllers need the ability to:
-    a) generate the URLs needed for the Backend
-    b) generate the JIT (View, Inline, and Parent) Controller for each View
-    """
-
     checks_class = None
     children = ()
     inlines = ()
     parent = None
     registrar = None
     force_backend_as_registrar = False
-
-    parent_controller_class = controllers.ParentController
-    child_controller_class = controllers.InlineController
 
     def __init__(self, parent, registrar=None):
         """
@@ -91,7 +41,7 @@ class Controller(Router, Registry, controllers.BaseController):
         """
 
         # only registered Controller will be aware of their registered parent
-        from .backend import Backend
+        from .base import Backend
         if isinstance(parent, Backend):
             if registrar and registrar != parent:
                 raise ValueError('"registrar" cannot be set to non-backend when'
@@ -119,119 +69,45 @@ class Controller(Router, Registry, controllers.BaseController):
         return (self.checks_class().check(self, **kwargs)
                 if self.checks_class else [])
 
-    def get_parent_controller(self, view, kwargs):
-        parent_controller = self.parent_controller_class(
-            view=view, controller=self, kwargs=kwargs)
-        parent_controller.__class__.__name__ =  str('{}ParentController'.format(
-            parent_controller.controller.model.__name__
-        ))
-        return parent_controller
+    def get_associated_queryset(self):
+        queryset = self.model._default_manager.get_queryset()
+        queryset.attach(controller=self)
 
-    def get_child_controller(self, view):
-        child_controller = self.child_controller_class(view=view,
-                                                       controller=self)
-        return child_controller
+    def get_view_parent(self, view, kwargs):
+        view_parent = view.view_parent_class(
+            view=view, controller=self, kwargs=kwargs)
+        view_parent.__class__.__name__ =  str('{}ViewParent'.format(
+            view_parent.controller.model.__name__
+        ))
+        return view_parent
+
+    def get_view_child(self, view):
+        view_child = view.view_child_class(view=view, controller=self)
+        return view_child
 
     def get_urlpatterns(self):
-        from django.conf.urls import url, include
 
-        # the minimum "contract" of a controller are list and display views
-        urlpatterns = [
-            url(r'^$',
-                self.get_view('list').as_view(
-                    backend=self.backend,
-                    controller=self
-                ),
-                name='list'),
-        ]
+        # gets the set of named urlpatterns from this controller's viewsets
+        urlpatterns = super(Controller, self).get_urlpatterns(self)
 
-        # if an auth path exists, provide add and single-object views
-        if self.auth_query:
-            urlpatterns.append(
-                url(r'^add$',
-                    self.get_view('add').as_view(
-                        backend=self.backend,
-                        controller=self
-                    ),
-                    name='add')
-            )
-
-            # attach all single-object manipulation modes
-            for mode in set(self.views.keys()) - set([
-                'list', 'view', 'add',
-            ]):
-                urlpatterns.append(
-                    url(r'^(?P<{lookup}>[-\w]+)/{mode}$'.format(
-                            lookup=self.model_lookup,
-                            mode=mode,
-                        ),
-                        self.get_view(mode).as_view(
-                            backend=self.backend,
-                            controller=self,
-                            mode=mode,
-                        ),
-                        name=mode,
-                    )
-                )
-
-        # defer the display view until after "add" so it is not mistaken as slug
-        urlpatterns += [
-            url(r'^(?P<{lookup}>[-\w]+)$'.format(
-                    lookup=self.model_lookup
-                ),
-                self.get_view('view').as_view(
-                    backend=self.backend,
-                    controller=self
-                ),
-                name='view'),
-        ]
-
-        # next, instantiate and add any related controller's sub-URLs
-        # we will
+        # gets the urlpatterns from each child and makes additional entries
+        # in the patterns as needed
         for child_controller_class in self.children:
-            child_model = child_controller_class.opts.model
-
-            # in the event the child self-promoted to the backend, we will add
-            # only a list URL under this spec to we can provide naturally
-            # filter list views and provide parent-aware add views
-            if child_controller_class.force_backend_as_registrar:
-                child_controller = self.backend.get_registered_controller(child_model)
-                # NOTE: we are applying get_view to THIS controller not the
-                # child to ensure the view registration happens on the correct
-                # controller
-
-                child_urlpatterns = [
-                    url(r'^$',
-                        self.get_view('list', child_controller).as_view(
-                            backend=self.backend,
-                            controller=child_controller
-                        ),
-                        name='list'),
-                ]
-                if self.auth_query:
-                    child_urlpatterns.append(
-                        url(r'^add$',
-                            self.get_view('add', child_controller).as_view(
-                                backend=self.backend,
-                                controller=child_controller
-                            ),
-                            name='add'),
-                    )
-            else:
-                child_controller = self.get_registered_controller(child_model)
-                child_urlpatterns = child_controller.urls
-
-            #  url(model_prefix, include(
-            # (model_urlpatterns, model_namespace)))
+            child_model = child_controller_class.model
+            child_controller = self.get_registered_controller(child_model)
             child_namespace = child_controller.model_namespace
             child_prefix = child_controller.url_prefix
-            urlpatterns.append(
-                url(r'^(?P<{lookup}>[-\w]+)/{prefix}'.format(
-                        lookup=self.model_lookup,
-                        prefix=child_prefix
+
+            # get named patterns from child and extend
+            child_urlpatterns = child_controller.get_urlpatterns()
+            for name, patterns in child_urlpatterns.items():
+                urlpatterns[name].append(
+                    url(r'^(?P<{lookup}>[-\w]+)/{prefix}/'.format(
+                            lookup=self.model_lookup,
+                            prefix=child_prefix
+                        ),
+                        include((patterns, child_namespace))
                     ),
-                    include((child_urlpatterns, child_namespace))
-                ),
-            )
+                )
 
         return urlpatterns

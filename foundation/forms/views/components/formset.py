@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from .... import forms
+from django import forms
+
+#from ... import models
 from .form import BaseModelFormMixin
-from .query import MultipleObjectMixin
 
-__all__ = 'BaseFormSetMixin', 'InlineFormsetMixin'
+__all__ = 'FormSetMixin',
 
 
-class BaseFormSetMixin(BaseModelFormMixin):
+class FormSetMixin(BaseModelFormMixin):
 
     extra = 1
     min_num = None
     max_num = None
-    formset_class = forms.BaseModelFormSet
-    inlineformset_class = forms.BaseInlineFormSet
-    modelform_class = forms.FormSetModelForm
 
     def get_extra(self, obj=None, **kwargs):
         """Hook for customizing the number of extra inline forms."""
@@ -36,13 +34,16 @@ class BaseFormSetMixin(BaseModelFormMixin):
         # TODO: when a controller base class has fieldsets and it is concretely
         # inherited to make a second controller, the fieldsets are no longer
         # considered-- probably to do with options... FIXME
-        FormsetForm = self.get_form_class(obj=obj, modelform_class=self.modelform_class)
+        FormsetForm = self.get_form_class(
+            obj=obj,
+            modelform_class=self.formset_form_class
+        )
 
         # can_delete = self.can_delete and self.has_delete_permission(request, obj)
         # as it stands, can_delete is a concept only for inline controllers
         # we expect the non-inline formsets to get checkboxes for actions etc.
         extra = self.view.edit and self.get_extra(self, **kwargs) or 0
-        can_delete = self.view.mode == 'edit' and self.has_delete_permission()
+        can_delete = self.view.mode == 'edit' and self.has_permission('delete')
 
         defaults = dict(
             form=FormsetForm,
@@ -99,7 +100,7 @@ class BaseFormSetMixin(BaseModelFormMixin):
             # views normally groom the QS and pass it in but not inlines
             'queryset': queryset or self.get_queryset(),
             'view': self,
-            'is_readonly': not self.view.edit,
+            # 'is_readonly': not self.view.edit,
             'fieldsets': list(self.get_fieldsets(mode=self.view.mode)),
             'readonly_fields': list(self.get_readonly_fields(mode=self.view.mode)),
             'prepopulated_fields': dict(self.get_prepopulated_fields(mode=self.view.mode)),
@@ -129,6 +130,22 @@ class BaseFormSetMixin(BaseModelFormMixin):
             formset_class=FormSet, obj=obj, queryset=queryset, **kwargs)
         return FormSet(**formset_kwargs)
 
+    def handle_common(self, handler, request, *args, **kwargs):
+        handler = super(FormSetMixin, self).handle_common(
+            handler, request, *args, **kwargs
+        )
 
-class InlineFormsetMixin(MultipleObjectMixin, BaseFormSetMixin):
-    pass
+        # parent_obj will be needed for non-local roots since they will use FK
+        # to build out an inline formset and provide add/edit inline
+        parent_obj = (self.view_parent.get_object()
+                      if not self.controller.is_local_root
+                      else None)
+
+        # feed the par-reduced queryset to formset, which will in turn FK
+        # constrain it, as applicable
+        self.formset = self.get_formset(
+            obj=parent_obj,
+            queryset=self.queryset
+        )
+
+        return handler

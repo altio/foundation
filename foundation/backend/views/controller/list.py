@@ -1,20 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.views.generic import list
+from ...controller import MultipleObjectMixin
+from .base import ControllerViewMixin
 
-from .base import ControllerMixin
-from .controllers.components import query
-
-
-__all__ = 'ListView',
+__all__ = 'ListMixin',
 
 
-class MultipleObjectMixin(query.MultipleObjectMixin, ControllerMixin):
-    pass
-
-
-class ListView(MultipleObjectMixin, list.ListView):
+class ListMixin(MultipleObjectMixin, ControllerViewMixin):
 
     mode = 'list'
-    template_name = 'list.html'

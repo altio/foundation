@@ -9,12 +9,10 @@ from django.db import models
 from django.core.exceptions import FieldError
 from django.core.urlresolvers import reverse
 from django.forms.widgets import CheckboxSelectMultiple, SelectMultiple
-from django.utils.functional import cached_property
 from django.utils.translation import string_concat, ugettext as _
 
 from .... import forms
 from ....utils import flatten_fieldsets, get_content_type_for_model
-from .query import QueryMixin
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
            'VERTICAL', 'PUBLIC_MODES', 'PRIVATE_MODES',
@@ -23,35 +21,18 @@ __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
 
 HORIZONTAL, VERTICAL = 1, 2
 
-PUBLIC_MODES = ('list', 'view')
+PUBLIC_MODES = ('list', 'view', 'display')
 PRIVATE_MODES = ('add', 'edit')
 
 
 FORMFIELD_FOR_DBFIELD_DEFAULTS = {
 }
-"""
-    models.DateTimeField: {
-        'form_class': forms.SplitDateTimeField,
-        'widget': forms.SplitDateTimeWidget
-    },
-    models.DateField: {'widget': forms.DateInput},
-    models.TimeField: {'widget': forms.TimeInput},
-    models.TextField: {'widget': forms.Textarea},
-    models.URLField: {'widget': forms.URLInput},
-    models.IntegerField: {'widget': forms.IntegerFieldWidget},
-    models.BigIntegerField: {'widget': forms.BigIntegerFieldWidget},
-    models.CharField: {'widget': forms.TextInput},
-    models.ImageField: {'widget': forms.ClearableFileInput},
-    models.FileField: {'widget': forms.ClearableFileInput},
-    models.EmailField: {'widget': forms.EmailInput},
-}
-"""
 
 def get_ul_class(radio_style):
     return 'radiolist' if radio_style == VERTICAL else 'radiolist inline'
 
 
-class BaseModelFormMixin(QueryMixin):
+class BaseModelFormMixin(object):
     """
     Common base for ModelForm yielding views that does not make presumptions
     about downstream use in a single- or multiple-object context.
@@ -59,12 +40,12 @@ class BaseModelFormMixin(QueryMixin):
     and access to the controller (registered) via self.controller.
     """
 
-    def __init__(self, *args, **kwargs):
-        super(BaseModelFormMixin, self).__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        super(BaseModelFormMixin, self).__init__(**kwargs)
         # Merge FORMFIELD_FOR_DBFIELD_DEFAULTS with the formfield_overrides
         # rather than simply overwriting.
         overrides = copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS)
-        for k, v in self.formfield_overrides.items():
+        for k, v in self.controller.formfield_overrides.items():
             overrides.setdefault(k, {}).update(v)
         self.formfield_overrides = overrides
 
@@ -86,6 +67,7 @@ class BaseModelFormMixin(QueryMixin):
         NOTE: There is a feedback loop with get_form here where when fields are
         missing on the controller it will go back to get_form with fields=None
         """
+
         # fields can be a mode:whitelist dictionary
         if isinstance(self.fields, dict):
             fields = self.fields.get(mode)
@@ -168,7 +150,6 @@ class BaseModelFormMixin(QueryMixin):
             "formfield_callback": self.formfield_for_dbfield,
         }
         defaults.update(kwargs)
-
         return defaults
 
     def get_form_class(self, obj=None, modelform_class=None, **kwargs):
@@ -248,6 +229,41 @@ class BaseModelFormMixin(QueryMixin):
         if db_field.choices:
             return self.formfield_for_choice_field(db_field, **kwargs)
 
+        # ForeignKey or ManyToManyFields
+        if isinstance(db_field, models.ManyToManyField) or isinstance(db_field, models.ForeignKey):
+            # Combine the field kwargs with any options for formfield_overrides.
+            # Make sure the passed in **kwargs override anything in
+            # formfield_overrides because **kwargs is more specific, and should
+            # always win.
+            if db_field.__class__ in self.formfield_overrides:
+                kwargs = dict(self.formfield_overrides[db_field.__class__], **kwargs)
+
+            # Get the correct formfield.
+            if isinstance(db_field, models.ForeignKey):
+                formfield = self.formfield_for_foreignkey(db_field, **kwargs)
+            elif isinstance(db_field, models.ManyToManyField):
+                formfield = self.formfield_for_manytomany(db_field, **kwargs)
+
+            # For non-raw_id fields, wrap the widget with a wrapper that adds
+            # extra HTML -- the "add other" interface -- to the end of the
+            # rendered output. formfield can be None if it came from a
+            # OneToOneField with parent_link=True or a M2M intermediary.
+            if formfield and db_field.name not in self.raw_id_fields:
+                related_model = db_field.remote_field.model
+                related_controller = self.view.get_related_controller(related_model)
+                wrapper_kwargs = {}
+                # if related_controller:
+                #     wrapper_kwargs.update(
+                #         can_add_related=related_controller.has_permission('add'),
+                #         can_change_related=related_controller.has_permission('change'),
+                #         can_delete_related=related_controller.has_permission('delete'),
+                #     )
+                formfield.widget = forms.RelatedFieldWidgetWrapper(
+                    formfield.widget, db_field.remote_field, related_controller, **wrapper_kwargs
+                )
+
+            return formfield
+
         # If we've got overrides for the formfield defined, use 'em. **kwargs
         # passed to formfield_for_dbfield override the defaults.
         for klass in db_field.__class__.mro():
@@ -296,7 +312,16 @@ class BaseModelFormMixin(QueryMixin):
         """
         Get a form Field for a ForeignKey.
         """
+        from django.contrib.admin import widgets
+
         db = kwargs.get('using')
+        if db_field.name in self.raw_id_fields:
+            kwargs['widget'] = widgets.ForeignKeyRawIdWidget(db_field.remote_field, self.admin_site, using=db)
+        elif db_field.name in self.radio_fields:
+            kwargs['widget'] = widgets.AdminRadioSelect(attrs={
+                'class': get_ul_class(self.radio_fields[db_field.name]),
+            })
+            kwargs['empty_label'] = _('None') if db_field.blank else None
 
         if 'queryset' not in kwargs:
             queryset = self.get_field_queryset(db, db_field)
@@ -311,10 +336,19 @@ class BaseModelFormMixin(QueryMixin):
         """
         # If it uses an intermediary model that isn't auto created, don't show
         # a field in admin.
+        from django.contrib.admin import widgets
 
         if not db_field.remote_field.through._meta.auto_created:
             return None
         db = kwargs.get('using')
+
+        if db_field.name in self.raw_id_fields:
+            kwargs['widget'] = widgets.ManyToManyRawIdWidget(db_field.remote_field, self.admin_site, using=db)
+        elif db_field.name in (list(self.filter_vertical) + list(self.filter_horizontal)):
+            kwargs['widget'] = widgets.FilteredSelectMultiple(
+                db_field.verbose_name,
+                db_field.name in self.filter_vertical
+            )
 
         if 'queryset' not in kwargs:
             queryset = self.get_field_queryset(db, db_field)

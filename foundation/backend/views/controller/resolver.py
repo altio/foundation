@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from ...controller.resolver import Resolver
-
-__all__ = 'ChainingMixin',
+from ...controller.resolver import ModelResolver
 
 
-class ChainingMixin(Resolver):
+class ChainingMixin(ModelResolver):
     """
-    Adds URL chaining to the BaseViewController, providing view, parent, and
-    inline controllers (with registered counterparts) a URL to the appropriate
-    mode.
+    Provides ViewControllers with an ability to introspect and determine the URL
+    for a particular mode given the current view and an optional, in-focus
+    object.  This may be a View, ViewParent, or ViewChild (including inlines).
     """
 
     def get_url_kwargs(self, mode, **kwargs):
         """
         This version of get_url_kwargs grooms them from the Controller (in this
-        case, a BaseViewController subclass).
+        case, a BaseModelView subclass).
         """
         kwargs.update(**self.kwargs)
         kwargs = super(ChainingMixin, self).get_url_kwargs(mode, **kwargs)
@@ -26,21 +24,14 @@ class ChainingMixin(Resolver):
 
         return kwargs
 
-    def get_label(self, mode):
-        return ''.format(self.verbose_name_plural
-                         if mode == 'list'
-                         else (self.verbose_name
-                               if mode == 'add'
-                               else self.get_object()))
+    def get_url(self, mode, obj=None, route=None, **kwargs):
 
-    def get_breadcrumb(self, mode):
-        """
-        Helper method to return the components of a breadcrumb.
-        :param mode: (str) a valid view mode for this controller
-        :param kwargs: (dict str:str) a dictionary of view kwargs to use
-        :rtype: 2-tuple of strings: label, url
-        """
+        # if obj passed to this call, add to kwargs, then ditch it
+        if obj and self.controller.model_lookup not in kwargs:
+            try:
+                lookup_value = getattr(obj, 'slug')
+            except AttributeError:
+                lookup_value = getattr(obj, 'pk')
+            kwargs.update({self.controller.model_lookup: lookup_value})
 
-        url = self.get_url(mode)
-        label = self.get_label(mode) if url else None
-        return label, url
+        return super(ChainingMixin, self).get_url(mode, route=route, **kwargs)

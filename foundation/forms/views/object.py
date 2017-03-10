@@ -6,31 +6,49 @@ from django.utils.encoding import force_text
 from django.utils.translation import ugettext as _
 from django.views.generic import edit
 
-from .. import forms
-from ..utils import get_deleted_objects
-from .base import ControllerMixin, LoginRequiredMixin
-from .controllers.components import form, formset
-from .detail import SingleObjectMixin
-from .list import MultipleObjectMixin
+from ... import forms
+from ...utils import get_deleted_objects
+
+from ...backend import views
+from .base import FormControllerViewMixin
+from .components import BaseModelFormMixin
+
 
 __all__ = 'AddView', 'EditView', 'DisplayView', 'DeleteView'
 
 
-class SingleObjectFormMixin(SingleObjectMixin, form.BaseModelFormMixin):
-    """
-    Mixes the view-and-controller aware SingleObjectMixin with the ModelForm
-    Controller helpers.
-    """
+class ObjectMixin(views.ObjectMixin):
+
+    def get_success_url(self):
+        return self.get_url('list')
 
 
-class MultipleObjectFormsetMixin(MultipleObjectMixin, formset.BaseFormSetMixin):
-    """
-    Mixes the view-and-controller aware MultipleObjectMixin with the FormSet
-    Controller helpers.
-    """
+class DeleteView(ObjectMixin, views.BackendTemplateMixin, edit.BaseDeleteView):
+
+    mode = 'delete'
+    mode_title = 'delete'
+    template_name = 'delete.html'
+
+    def get_context_data(self, **kwargs):
+        object_name = force_text(self.object._meta.verbose_name)
+
+        # Populate deleted_objects, a data structure of all related objects that
+        # will also be deleted.
+        (deleted_objects, model_count, perms_needed, protected) = get_deleted_objects(
+            [self.object], self.object._meta, self.request.user,
+            self.backend, router.db_for_write(self.model))
+
+        kwargs.update(
+            object_name=object_name,
+            deleted_objects=deleted_objects,
+            model_count=dict(model_count).items(),
+        )
+        return super(DeleteView, self).get_context_data(**kwargs)
 
 
-class ProcessFormView(ControllerMixin, edit.ProcessFormView):
+class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
+                      edit.ModelFormMixin, edit.ProcessFormView):
+    """ Single-Object ModelForm View Mixin """
 
     def handle_common(self, handler, request, *args, **kwargs):
         handler = super(ProcessFormView, self).handle_common(
@@ -65,13 +83,8 @@ class ProcessFormView(ControllerMixin, edit.ProcessFormView):
         else:
             return self.form_invalid(self.form)
 
-
-class BaseChangeFormView(SingleObjectFormMixin, ProcessFormView):
-
-    template_name = 'change_form.html'
-
     def get_media(self):
-        media = super(BaseChangeFormView, self).get_media()
+        media = super(ProcessFormView, self).get_media()
         media += self.form.media
         for inline_formset in self.inline_formsets:
             media += inline_formset.media
@@ -82,8 +95,6 @@ class BaseChangeFormView(SingleObjectFormMixin, ProcessFormView):
         request = self.request
         opts = self.model._meta
         app_label = opts.app_label
-        # preserved_filters = self.get_preserved_filters(request)
-        # form_url = add_preserved_filters({'preserved_filters': preserved_filters, 'opts': opts}, form_url)
 
         # from changeform_view
         object_id = None
@@ -93,71 +104,36 @@ class BaseChangeFormView(SingleObjectFormMixin, ProcessFormView):
 
         kwargs.update({
             'mode': self.mode,
-            'has_add_permission': self.has_add_permission(),
-            'has_change_permission': self.has_edit_permission(obj=self.object),
-            'has_delete_permission': self.has_delete_permission(obj=self.object),
-            # 'has_file_field': True,  # FIXME - this should check if form or formsets have a FileField,
-            # 'form_url': form_url,
+            'has_add_permission': self.has_permission('add'),
+            'has_change_permission': self.has_permission('edit', obj=self.object),
+            'has_delete_permission': self.has_permission('delete', obj=self.object),
             'opts': opts,
-            # 'content_type_id': get_content_type_for_model(self.model).pk,
-            # 'save_as': self.save_as,
-            # 'save_on_top': self.save_on_top,
-            'to_field_var': forms.TO_FIELD_VAR,
-            'is_popup_var': forms.IS_POPUP_VAR,
             'app_label': app_label,
             'title': _(self.mode_title),
             'form': self.form,
             'object_id': object_id,
-            # is_popup=(IS_POPUP_VAR in request.POST or
-            #           IS_POPUP_VAR in request.GET),
-            # 'to_field': to_field,
             'inline_formsets': self.inline_formsets,
-            # errors=helpers.AdminErrorList(form, formsets),
-            # preserved_filters=self.get_preserved_filters(request),
         })
 
-        return super(BaseChangeFormView, self).get_context_data(**kwargs)
+        return super(ProcessFormView, self).get_context_data(**kwargs)
 
 
-class AddView(LoginRequiredMixin, BaseChangeFormView, edit.CreateView):
+class AddView(ProcessFormView):
 
     mode = 'add'
     mode_title = 'add a'
+    template_name = 'add.html'
 
 
-class EditView(LoginRequiredMixin, BaseChangeFormView, edit.UpdateView):
+class EditView(ProcessFormView):
 
     mode = 'edit'
     mode_title = 'Editing'
+    template_name = 'edit.html'
 
 
-class DisplayView(BaseChangeFormView, edit.UpdateView):
+class DisplayView(ProcessFormView):
 
-    mode = 'view'
+    mode = 'display'
     mode_title = ''
-
-
-class DeleteView(LoginRequiredMixin, SingleObjectMixin, edit.DeleteView):
-
-    mode = 'delete'
-    mode_title = 'delete'
-    template_name = 'delete_confirmation.html'
-
-    def get_context_data(self, **kwargs):
-        object_name = force_text(self.object._meta.verbose_name)
-
-        # Populate deleted_objects, a data structure of all related objects that
-        # will also be deleted.
-        (deleted_objects, model_count, perms_needed, protected) = get_deleted_objects(
-            [self.object], self.object._meta, self.request.user,
-            self.backend, router.db_for_write(self.model))
-
-        kwargs.update(
-            object_name=object_name,
-            deleted_objects=deleted_objects,
-            model_count=dict(model_count).items(),
-        )
-        return super(DeleteView, self).get_context_data(**kwargs)
-
-    def get_success_url(self):
-        return self.get_list_url()
+    template_name = 'display.html'

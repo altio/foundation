@@ -12,7 +12,7 @@
           <div class="panel-body">
             <ul>
               {% for controller in app_controllers %}
-                <li><a href="{{ controller.get_index_url }}">{{ controller.opts.verbose_name_plural | title }}</a></li>
+                <li><a href="{{ controller.get_index_url }}">{{ controller.verbose_name_plural | title }}</a></li>
               {% endfor %}
             </ul>
           </div>

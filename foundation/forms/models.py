@@ -18,22 +18,7 @@ from .forms import BackendFormMixin
 
 
 __all__ = ('ModelForm', 'FormSetModelForm', 'BaseModelFormSet',
-           'BaseInlineFormSet', 'IS_POPUP_VAR', 'TO_FIELD_VAR')
-
-
-# Changelist settings
-ALL_VAR = 'all'
-ORDER_VAR = 'o'
-ORDER_TYPE_VAR = 'ot'
-PAGE_VAR = 'p'
-SEARCH_VAR = 'q'
-ERROR_FLAG = 'e'
-
-IS_POPUP_VAR = '_popup'
-TO_FIELD_VAR = '_to_field'
-
-IGNORED_PARAMS = (
-    ALL_VAR, ORDER_VAR, ORDER_TYPE_VAR, SEARCH_VAR, IS_POPUP_VAR, TO_FIELD_VAR)
+           'BaseInlineFormSet')
 
 
 class ModelForm(BackendFormMixin, models.ModelForm):
@@ -136,12 +121,14 @@ class BackendFormSetMixin(object):
     love they need now.
     """
 
-    def __init__(self, fieldsets, prepopulated_fields=None,
-                 readonly_fields=None, view=None, is_readonly=False,
-                 **kwargs):
+    def __init__(self, view, fieldsets, prepopulated_fields=None,
+                 readonly_fields=None, is_readonly=False, **kwargs):
+        """
+        view is the BaseViewController subclass.  It could be a View,
+        ViewParent, or ViewChild (for registered child or inline child).
+        """
         super(BackendFormSetMixin, self).__init__(**kwargs)
-        # they chose to trojan the controller in lieu of model._meta
-        self.opts = view
+        self.view = view
         self.fieldsets = fieldsets
         self.is_readonly = is_readonly
         if readonly_fields is None:
@@ -158,7 +145,7 @@ class BackendFormSetMixin(object):
         kwargs.update(formset=self, fieldsets=self.fieldsets,
                       prepopulated_fields=self.prepopulated_fields,
                       readonly_fields=self.readonly_fields,
-                      view=self.opts)
+                      view=self.view)
         return kwargs
 
     def fields(self):
@@ -166,16 +153,16 @@ class BackendFormSetMixin(object):
             if field_name in self.readonly_fields:
                 yield {
                     'name': field_name,
-                    'label': label_for_field(field_name, self.opts.model, self.opts),
+                    'label': label_for_field(field_name, self.view.model, self.view),
                     'widget': {'is_hidden': False},
                     'required': False,
-                    'help_text': help_text_for_field(field_name, self.opts.model),
+                    'help_text': help_text_for_field(field_name, self.view.model),
                 }
             else:
                 form_field = self.empty_form.fields[field_name]
                 label = form_field.label
                 if label is None:
-                    label = label_for_field(field_name, self.opts.model, self.opts)
+                    label = label_for_field(field_name, self.view.model, self.view)
                 yield {
                     'name': field_name,
                     'label': label,
@@ -187,7 +174,7 @@ class BackendFormSetMixin(object):
     @property
     def media(self):
         # get the media for the controller and the formset('s form)
-        media = self.opts.media + super(BackendFormSetMixin, self).media
+        media = self.view.media + super(BackendFormSetMixin, self).media
         for fs in self:
             media = media + fs.media
         return media

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+{% block bodyclass %}{{ block.super }} app-{{ view.app_label }} model-{{ view.model_name }} change-list{% endblock %}
 
 {% block coltype %}flex{% endblock %}
 
@@ -21,8 +21,8 @@
       {% endif %}
     {% endblock %}
     {% endcomment %}
-    <form id="changelist-form" method="post"{% if formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
-      {% include formset.opts.formset_template %}
+      {% include formset.view.list_templates.tabular %}
+    {% block pagination %}{% endblock pagination %}
     </form>
   </div>
 

@@ -4,7 +4,7 @@
 {% block beforefieldline %}{% endblock %}
 {% for field in fieldline %}
   {% block beforefield %}{% endblock %}
-  {% include 'includes/field.html' %}
+  {% include 'fragments/field.html' %}
   {% block afterfield %}
   {% if form.view.edit %}{{ field.errors.as_ul }}{% endif %}
   {% if field.help_text %}

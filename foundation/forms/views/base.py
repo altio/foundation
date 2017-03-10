@@ -3,48 +3,72 @@ from __future__ import unicode_literals
 
 from django.forms.models import _get_foreign_key
 from django.shortcuts import resolve_url
+from django.template.defaultfilters import title
 from django.utils.translation import ugettext_lazy as _
+from django.urls.exceptions import NoReverseMatch
 
-from ..forms import IS_POPUP_VAR, TO_FIELD_VAR
-from ..template.response import TemplateResponse
-from ..utils import flatten_fieldsets
-from .controllers import BaseViewController
+from ...backend import views
+from ...utils import flatten_fieldsets
+from .components import FormSetMixin
 
 
-class ControllerMixin(BaseViewController, AppAccessMixin, BackendMixin):
+class ViewChild(FormSetMixin, views.ViewChild):
+
+    @property
+    def list_template(self):
+        self.list_templates[self.list_template_name]
+
+    def get_permissions_model(self):
+        permissions_model = super(ViewChild, self).get_permissions_model()
+
+        if permissions_model._meta.auto_created:
+            # The model was auto-created as intermediary for a
+            # ManyToMany-relationship, find the target model
+            for field in permissions_model._meta.fields:
+                if field.remote_field and field.remote_field.model != self.view.model:
+                    permissions_model = field.remote_field.model
+                    break
+
+        return permissions_model
+
+    def get_queryset(self):
+        # early exit if this is an inline in edit mode and we are not permitted
+        if self.view.add or self.view.edit and not self.has_permission('edit'):
+            return self.model._default_manager.get_queryset().none()
+
+        return super(ViewChild, self).get_queryset()
+
+    def get_url(self, mode, **kwargs):
+        url = self.view.get_url(mode, self.controller, **kwargs)
+        if not url:
+            url = super(ViewChild, self).get_url(mode, **kwargs)
+        return url
+
+
+class FormControllerViewMixin(views.ControllerViewMixin, views.BackendTemplateMixin):
 
     def get_context_data(self, **kwargs):
-        opts = self.model._meta
-        app_label = opts.app_label
-        model_name = opts.model_name
+        app_label = self.app_label
+        model_name = self.model_name
 
         kwargs.update({
             'mode': self.mode,
-            'opts': opts,
-            'has_add_permission': self.has_add_permission(),
-            'has_change_permission': self.has_edit_permission(),
-            'has_delete_permission': self.has_delete_permission(),
-            'to_field_var': TO_FIELD_VAR,
-            'is_popup_var': IS_POPUP_VAR,
+            'has_add_permission': self.has_permission('add'),
+            'has_change_permission': self.has_permission('change'),
+            'has_delete_permission': self.has_permission('delete'),
             'app_label': app_label,
             'model_name': model_name,
             'title': _(self.mode_title),
-            # 'to_field': to_field,
-            # errors=helpers.AdminErrorList(form, formsets),
-            # preserved_filters=self.get_preserved_filters(request),
-            'is_popup': (IS_POPUP_VAR in self.request.POST or
-                         IS_POPUP_VAR in self.request.GET)
-
         })
 
-        return super(ControllerMixin, self).get_context_data(**kwargs)
+        return super(FormControllerViewMixin, self).get_context_data(**kwargs)
 
     def get_formsets_with_inlines(self, obj=None):
         """
         Yields tuples of FormSet class and InlineController instances.
         """
-        for child in self.children.values():
-            yield child.get_formset_class(obj), child
+        for view_child in self.view_children.values():
+            yield view_child.get_formset_class(obj), view_child
 
     def get_inline_formsets(self, obj, change):
         "Helper function to generate InlineFormSets for add/change_view."
@@ -70,18 +94,40 @@ class ControllerMixin(BaseViewController, AppAccessMixin, BackendMixin):
                 if obj
                 else title('{} {}'.format(self.mode_title, self.controller.opts.verbose_name)))
 
+    def get_label(self, mode):
+        return ''.format(self.verbose_name_plural
+                         if mode == 'list'
+                         else (self.verbose_name
+                               if mode == 'add'
+                               else self.get_object()))
+
+    def get_breadcrumb(self, mode):
+        """
+        Helper method to return the components of a breadcrumb.
+        :param mode: (str) a valid view mode for this controller
+        :param kwargs: (dict str:str) a dictionary of view kwargs to use
+        :rtype: 2-tuple of strings: label, url
+        """
+
+        url = self.get_url(mode)
+        label = self.get_label(mode) if url else None
+        return label, url
+
     def get_breadcrumbs(self):
 
         # start with the app index up top
-        breadcrumbs = [(self.app_label,
-                        resolve_url('{}:index'.format(self.app_label)))]
+        try:
+            breadcrumbs = [(self.app_label,
+                            resolve_url('{}:index'.format(self.app_label)))]
+        except NoReverseMatch:
+            breadcrumbs = []
 
         if self.accessed_by_parent:
             parent_crumbs = []
-            for parent in self.parents:
-                parent_crumbs.append(parent.get_breadcrumb('view'))
-                if parent.controller.is_local_root:
-                    parent_crumbs.append(parent.get_breadcrumb('list'))
+            for view_parent in self.view_parents:
+                parent_crumbs.append(view_parent.get_breadcrumb('view'))
+                if view_parent.controller.is_local_root:
+                    parent_crumbs.append(view_parent.get_breadcrumb('list'))
                     break
             breadcrumbs.extend(reversed(parent_crumbs))
 

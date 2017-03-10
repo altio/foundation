@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.core.exceptions import PermissionDenied
+from django.conf import settings
 from django.views.generic import base
 
 from ...template.response import TemplateResponse
+from ...utils import redirect_to_url
 
-__all__ = 'View', 'TemplateView', 'AppIndexView'
+__all__ = 'BackendMixin', 'DispatchMixin', 'AppPermissionsMixin', 'AppMixin', \
+    'View', 'TemplateView', 'AppView', 'AppTemplateView', 'AppIndexView', \
+    'BackendTemplateMixin'
 
 
 class DispatchMixin(object):
@@ -28,13 +31,6 @@ class DispatchMixin(object):
         allowed, perform common work and do any validation needed.
         Return the handler passed or an alternate, as appropriate.
         """
-
-        # re-map mode name to permission name
-        mode = self.mode if self.mode != 'edit' else 'change'
-
-        # helpers used throughout
-        self.add = self.mode == 'add' or '_saveasnew' in request.POST
-        self.edit = self.mode in ('add', 'edit')
 
         return handler
 
@@ -67,6 +63,53 @@ class BackendMixin(DispatchMixin):
 
     backend = None
     mode = None
+
+    def handle_common(self, handler, request, *args, **kwargs):
+        """
+        Once a handler has been resolved and the the method is confirmed to be
+        allowed, perform common work and do any validation needed.
+        Return the handler passed or an alternate, as appropriate.
+        """
+
+        # helpers used throughout
+        self.add = self.mode == 'add' or '_saveasnew' in request.POST
+        self.edit = self.mode in ('add', 'edit')
+        self.params = dict(request.GET.items())
+
+        return super(BackendMixin, self).handle_common(
+            handler, request, *args, **kwargs)
+
+
+class AppPermissionsMixin(BackendMixin):
+    """
+    Redirect to login if logged in (or anonymous) user lacks access to app and
+    it is not public.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (getattr(self.app_config, 'is_public', False) or
+                request.user.has_module_perms(self.app_config.label)):
+            return redirect_to_url(request, settings.LOGIN_URL)
+        return super(AppPermissionsMixin, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class AppMixin(AppPermissionsMixin):
+    app_config = None
+
+    def __init__(self, app_config, **kwargs):
+        self.app_config = app_config
+        super(AppMixin, self).__init__(**kwargs)
+
+
+class View(BackendMixin, base.View):
+    """ View with override of "dispatch" """
+
+
+class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
+                           base.ContextMixin):
+
     mode_title = ''
     response_class = TemplateResponse
 
@@ -80,51 +123,30 @@ class BackendMixin(DispatchMixin):
         return super(BackendMixin, self).get_context_data(**kwargs)
 
 
-class AppMixin(BackendMixin):
-    app_config = None
+class TemplateView(BackendTemplateMixin, base.TemplateView):
+    """ Backend-aware TemplateView """
 
-    def __init__(self, app_config, **kwargs):
-        self.app_config = app_config
-        super(AppMixin, self).__init__(**kwargs)
+
+class AppView(AppMixin, View):
+    """ View with override of "dispatch" """
+
+
+class AppTemplateMixin(AppMixin):
 
     def get_context_data(self, **kwargs):
         kwargs.update(
             app_label=self.app_config.label,
             app_name=self.app_config.verbose_name,
-        )
-        return super(AppMixin, self).get_context_data(**kwargs)
-
-
-class AppAccessMixin(BackendMixin):
-
-    def handle_common(self, handler, request, *args, **kwargs):
-        """
-        Raise 403 if logged in user does not have access to this app.
-        """
-        handler = super(AppAccessMixin, self).handle_common(
-            handler, request, *args, **kwargs)
-        if not getattr(self.app_config, 'is_public', False):
-            if not request.user.has_module_perms(self.app_config.label):
-                raise PermissionDenied('User does not have access to application.')
-        return handler
-
-
-class View(DispatchMixin, base.View):
-    """ View with override of "dispatch" """
-
-
-class TemplateView(BackendMixin, base.TemplateView):
-    """ Backend-aware TemplateView """
-
-
-class AppIndexView(AppAccessMixin, AppMixin, TemplateView):
-    mode = "list"
-    template_name = 'app_index.html'
-
-    def get_context_data(self, **kwargs):
-        kwargs.update(
             app_controllers=[self.backend.get_registered_controller(model)
                              for model in self.app_config.get_models()
                              if self.backend.has_registered_controller(model)],
         )
-        return super(AppIndexView, self).get_context_data(**kwargs)
+        return super(AppMixin, self).get_context_data(**kwargs)
+
+
+class AppTemplateView(AppTemplateMixin, TemplateView):
+    """ Backend-aware TemplateView """
+
+
+class AppIndexView(AppTemplateView):
+    template_name = 'app_index.html'
