@@ -16,6 +16,7 @@ from .views import TemplateView, AppTemplateView
 from django.conf.urls import url, include
 from django.shortcuts import resolve_url
 from django.urls.exceptions import NoReverseMatch
+from foundation.utils import namespace_in_urlpatterns
 
 __all__ = 'Backend', 'backends', 'get_backend'
 
@@ -133,11 +134,23 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             app_namespace = getattr(app_config,
                                     'url_namespace',
                                     app_config.label)
+
             urlprefix = getattr(app_config, 'url_prefix', app_config.label)
             urlprefix = (r'^{}/'.format(urlprefix)
                          if urlprefix is not None and urlprefix != ''
                          else r'')
             app_urlpatterns = self.get_app_urlpatterns(app_config)
+
+            # attempt to import the module's url patterns
+            append_urls = getattr(app_config, 'append_urls', True)
+            if append_urls:
+                try:
+                    app_urlpatterns[None].append(
+                        url(r'', include(r'{}.urls'.format(app_config.name)))
+                    )
+                except ImportError:
+                    pass
+
             for name, patterns in app_urlpatterns.items():
                 urlpatterns[name].append(
                     url(urlprefix, include(

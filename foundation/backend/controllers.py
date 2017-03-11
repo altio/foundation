@@ -30,6 +30,10 @@ class Controller(Router, BaseController):
     registrar = None
     force_backend_as_registrar = False
 
+    # move this to filter component
+    filter_horizontal = ()
+    filter_vertical = ()
+
     def __init__(self, parent, registrar=None):
         """
         Initializes a Model Controller for eventual registration as a Backend
