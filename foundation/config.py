@@ -2,12 +2,12 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 from django.utils.translation import ugettext_lazy as _
 
+from .backend import get_backend
 from .signals import create_permissions
 
 
 def autodiscover():
     from django.utils.module_loading import autodiscover_modules
-    from . import get_backend
     autodiscover_modules('controllers', register_to=get_backend())
 
 
@@ -20,7 +20,6 @@ class FoundationConfig(AppConfig):
     def ready(self):
         super(FoundationConfig, self).ready()
         self.module.config.autodiscover()
-        from . import get_backend
         backend = get_backend()
         if backend.create_permissions:
             post_migrate.connect(

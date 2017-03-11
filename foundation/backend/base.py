@@ -16,7 +16,7 @@ from django.conf.urls import url, include
 from django.shortcuts import resolve_url
 from django.urls.exceptions import NoReverseMatch
 
-__all__ = 'Backend',
+__all__ = 'Backend', 'backends', 'get_backend'
 
 logger = logging.getLogger(__name__)
 
@@ -193,3 +193,18 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             'site_title': self.site_title,
             'available_apps': self.get_available_apps(request),
         }
+
+
+"""
+Plan is to eventually actually allow for the declaration of per-Site Backends
+and get them from a SiteBackend registry.  For now, using a singleton list.
+"""
+
+backends = []
+
+
+def get_backend(site=None):
+    global backends
+    if not backends:
+        backends.append(Backend())
+    return backends[0]

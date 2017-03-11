@@ -1,5 +1,5 @@
 from foundation import forms, rest
-from foundation.decorators import register
+from foundation.backend import register
 
 from . import models
 

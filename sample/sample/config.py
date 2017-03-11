@@ -1,5 +1,4 @@
-from foundation import backends
-from foundation.backend import Backend
+from foundation.backend import Backend, backends
 from django.conf import settings
 from django.utils import timezone
 from django.apps import AppConfig

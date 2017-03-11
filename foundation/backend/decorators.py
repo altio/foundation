@@ -6,11 +6,11 @@ from functools import wraps
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.utils.decorators import available_attrs
 
-from . import get_backend
-from .backend import Backend, Controller
-from .utils import redirect_to_url
+from ..utils import redirect_to_url
+from .base import Backend, get_backend
+from .controllers import Controller
 
-__all__ = 'backend_context', 'register'
+__all__ = 'backend_context', 'register', 'request_passes_test'
 
 
 def backend_context(fbv, **params):
