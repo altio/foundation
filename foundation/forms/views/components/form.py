@@ -7,12 +7,11 @@ from collections import OrderedDict
 
 from django.db import models
 from django.core.exceptions import FieldError
-from django.core.urlresolvers import reverse
 from django.forms.widgets import CheckboxSelectMultiple, SelectMultiple
 from django.utils.translation import string_concat, ugettext as _
 
 from .... import forms
-from ....utils import flatten_fieldsets, get_content_type_for_model
+from ....utils import flatten_fieldsets
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
            'VERTICAL', 'PUBLIC_MODES', 'PRIVATE_MODES',
