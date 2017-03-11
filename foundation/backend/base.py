@@ -12,6 +12,7 @@ from django.utils.functional import cached_property
 from .. import utils
 from .registry import NotRegistered
 from .router import Router
+from .views import TemplateView, AppTemplateView
 from django.conf.urls import url, include
 from django.shortcuts import resolve_url
 from django.urls.exceptions import NoReverseMatch
@@ -25,7 +26,8 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
     create_permissions = False
     routes = ()
-    site_index_class = None
+    site_index_class = TemplateView
+    template_name = 'index.html'
 
     @property
     def site(self):
@@ -105,6 +107,15 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                     ),
                 )
 
+        # set app_index_class on app to "None" to skip creation
+        app_index_class = getattr(app_config, 'app_index_class', AppTemplateView)
+        if app_index_class:
+            template_name = getattr(app_config, 'template_name', 'app_index.html')
+            app_index = app_index_class.as_view(
+                app_config=app_config, backend=self, template_name=template_name
+            )
+            urlpatterns[None].append(url(r'^$', app_index, name='index'))
+
         return urlpatterns
 
     def get_urlpatterns(self, urlpatterns=None):
@@ -137,7 +148,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         if self.site_index_class:
             urlpatterns[None].append(
                 url(r'^$',
-                    self.site_index_class.as_view(backend=self),
+                    self.site_index_class.as_view(
+                        backend=self,
+                        template_name=self.template_name
+                    ),
                     name='home')
             )
 

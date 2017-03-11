@@ -8,8 +8,7 @@ from ...template.response import TemplateResponse
 from ...utils import redirect_to_url
 
 __all__ = 'BackendMixin', 'DispatchMixin', 'AppPermissionsMixin', 'AppMixin', \
-    'View', 'TemplateView', 'AppView', 'AppTemplateView', 'AppIndexView', \
-    'BackendTemplateMixin'
+    'View', 'TemplateView', 'AppView', 'AppTemplateView', 'BackendTemplateMixin'
 
 
 class DispatchMixin(object):
@@ -146,7 +145,3 @@ class AppTemplateMixin(AppMixin):
 
 class AppTemplateView(AppTemplateMixin, TemplateView):
     """ Backend-aware TemplateView """
-
-
-class AppIndexView(AppTemplateView):
-    template_name = 'app_index.html'
