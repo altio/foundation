@@ -87,12 +87,12 @@ class FormControllerViewMixin(views.ControllerViewMixin, views.BackendTemplateMi
 
     def get_title(self):
         if self.mode == 'list':
-            return _('all {}'.format(self.controller.opts.verbose_name_plural))
+            return _('all {}'.format(self.controller.verbose_name_plural))
         else:
             obj = getattr(self, 'object', None)
             return ('{} {}'.format(title(self.mode_title), obj)
                 if obj
-                else title('{} {}'.format(self.mode_title, self.controller.opts.verbose_name)))
+                else title('{} {}'.format(self.mode_title, self.controller.verbose_name)))
 
     def get_label(self, mode):
         return ''.format(self.verbose_name_plural
