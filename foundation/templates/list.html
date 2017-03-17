@@ -22,7 +22,7 @@
     {% endblock %}
     {% endcomment %}
     <h3>{{ formset.view_controller.get_title|title }}</h3>
-      {% include formset.view_controller.view_template %}
+      {% include view.view_template %}
     {% block pagination %}{% endblock pagination %}
     </form>
   </div>

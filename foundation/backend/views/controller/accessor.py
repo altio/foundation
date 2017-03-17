@@ -68,10 +68,22 @@ class ModelPermissionsMixin(AppPermissionsMixin):
         given the user attached to the View.
         """
 
+        # get the model for determining permissions for this view (this matters
+        # for auto-generated through tables)
+        permissions_model = self.get_permissions_model()
+
+        # now resolve to a registered controller for the permissions model
+        # -- this is allowed to be None in the case of an inline controller
+        permissions_controller = (
+            self.controller
+            if self.controller and self.controller.model == permissions_model
+            else self.view.get_related_controller(permissions_model)
+        )
+
         # get the list of modes for the default route of registered controller
-        if self.controller:
-            modes = self.controller.get_modes()
-            public_modes = self.controller.public_modes
+        if permissions_controller:
+            modes = permissions_controller.get_modes()
+            public_modes = permissions_controller.public_modes
         # default to only public, list view when an inline (no controller)
         else:
             public_modes = modes = ('list')

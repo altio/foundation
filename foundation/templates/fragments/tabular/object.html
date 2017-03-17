@@ -14,7 +14,7 @@
     {% endfor %}
     {% endspaceless %}
   </td>
-  <td>{% block object-link %}{% if formset_form.original and not formset_form.view.edit %}<a href="{% mode_url 'display' formset_form %}">{{ formset_form.original }}</a>{% endif %}{% endblock %}</td>
+  <td>{% block object-link %}{% if formset_form.original and not formset_form.view_controller.edit %}<a href="{% mode_url 'display' formset_form %}">{{ formset_form.original }}</a>{% endif %}{% endblock %}</td>
   {% endblock %}
 
   {% block columns %}

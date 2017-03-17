@@ -35,32 +35,6 @@ class TitleMixin(object):
 
 class FormChild(TitleMixin, FormSetMixin, views.ViewChild):
 
-    def get_permissions_model(self):
-        permissions_model = super(FormChild, self).get_permissions_model()
-
-        if permissions_model._meta.auto_created:
-            # The model was auto-created as intermediary for a
-            # ManyToMany-relationship, find the target model
-            for field in permissions_model._meta.fields:
-                if field.remote_field and field.remote_field.model != self.view.model:
-                    permissions_model = field.remote_field.model
-                    break
-
-        return permissions_model
-
-    def get_queryset(self):
-        # early exit if this is an inline in edit mode and we are not permitted
-        if self.view.add or self.view.edit and not self.has_permission('edit'):
-            return self.model._default_manager.get_queryset().none()
-
-        return super(FormChild, self).get_queryset()
-
-    def get_url(self, mode, **kwargs):
-        url = self.view.get_url(mode, self.controller, **kwargs)
-        if not url:
-            url = super(FormChild, self).get_url(mode, **kwargs)
-        return url
-
     @property
     def inline_template(self):
         return os.path.join(

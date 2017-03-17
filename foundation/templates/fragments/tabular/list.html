@@ -12,7 +12,7 @@
     <thead>
       <tr>
         <th class="original"></th>
-        <th class="original">{{ formset.view.get_title | title }}</th>
+        <th class="original">{{ formset.view_controller.get_title | title }}</th>
         {% block headers %}
         {% for field in formset.fields %}
           {% if not field.widget.is_hidden %}
@@ -27,7 +27,7 @@
         <th>
           {% if not view.edit %}
             {% ifpermission 'add' %}
-              <a href="{% mode_url 'add' formset %}">{% trans ' Add New ' %}{{ formset.view.verbose_name|title }}</a>
+              <a href="{% mode_url 'add' formset %}">{% trans ' Add New ' %}{{ formset.view_controller.verbose_name|title }}</a>
             {% endifpermission %}
           {% endif %}
         </th>

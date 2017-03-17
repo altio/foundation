@@ -35,7 +35,7 @@
       &nbsp;<a href="javascript:history.back()">{% trans 'Cancel' %}</a>
       {% if object.pk %}{% ifpermission 'delete' %}
         &nbsp;<a href="{% mode_url 'delete' %}">{% trans 'Delete this ' %}{{ view.verbose_name|title }}</a>
-	  {% endifpermission %}{% endif %}
+      {% endifpermission %}{% endif %}
     </p>
     {% endif %}
     {% endblock object-actions-after %}
