@@ -2,12 +2,12 @@
 from __future__ import unicode_literals
 
 from django.db import router
+from django.forms.models import _get_foreign_key
 from django.utils.encoding import force_text
-from django.utils.translation import ugettext as _
 from django.views.generic import edit
 
 from ... import forms
-from ...utils import get_deleted_objects
+from ...utils import flatten_fieldsets, get_deleted_objects
 
 from ...backend import views
 from .base import FormControllerViewMixin
@@ -57,6 +57,28 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         self.form = self.get_form()
         return handler
 
+    def get_formsets_with_inlines(self, obj=None):
+        """
+        Yields tuples of FormSet class and InlineController instances.
+        """
+        for view_child in self.view_children.values():
+            yield view_child.get_formset_class(obj), view_child
+
+    def get_inline_formsets(self, obj, change):
+        "Helper function to generate InlineFormSets."
+        inline_formsets = []
+        obj = obj if change else None
+        fields = flatten_fieldsets(self.get_fieldsets(self.mode))
+        for InlineFormSet, inline in self.get_formsets_with_inlines(obj):
+            inline_fk_field = _get_foreign_key(
+                self.model, inline.model, inline.fk_name)
+            if inline_fk_field.remote_field.name not in fields:
+                continue
+            formset_kwargs = inline.get_formset_kwargs(
+                formset_class=InlineFormSet, obj=obj)
+            inline_formsets.append(InlineFormSet(**formset_kwargs))
+        return inline_formsets
+
     def get(self, request, *args, **kwargs):
         self.inline_formsets = self.get_inline_formsets(
             self.object, change=not self.add
@@ -93,7 +115,6 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
     def get_context_data(self, **kwargs):
         # from render_change_form
         request = self.request
-        opts = self.model._meta
 
         # from changeform_view
         object_id = None
@@ -102,7 +123,6 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         add = object_id is None
 
         kwargs.update({
-            'opts': opts,
             'form': self.form,
             'object_id': object_id,
             'inline_formsets': self.inline_formsets,
@@ -130,3 +150,4 @@ class DisplayView(ProcessFormView):
     mode = 'display'
     mode_title = ''
     template_name = 'display.html'
+

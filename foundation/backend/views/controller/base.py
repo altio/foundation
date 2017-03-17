@@ -134,8 +134,8 @@ class ControllerViewMixin(BaseViewController):
         while view.controller.parent:
             kwargs.pop(view.controller.model_lookup, None)
             controller = view.controller.parent
-            parent = view.get_view_parent(controller=controller, kwargs=kwargs)
-            parents.append(parent)
+            view = controller.get_view_parent(view=view, kwargs=kwargs)
+            parents.append(view)
             kwargs = kwargs.copy()
 
         return tuple(parents)
@@ -143,13 +143,6 @@ class ControllerViewMixin(BaseViewController):
     @cached_property
     def view_parent(self):
         return self.view_parents[0] if self.view_parents else None
-
-    @cached_property
-    def accessed_by_parent(self):
-        parent_namespace = (self.view_parent.get_namespace(self.controller)
-                            if self.view_parent
-                            else None)
-        return parent_namespace == self.request.resolver_match.namespace
 
     @cached_property
     def view_children(self):

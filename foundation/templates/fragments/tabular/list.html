@@ -12,7 +12,7 @@
     <thead>
       <tr>
         <th class="original"></th>
-        <th class="original">{{ formset.view.verbose_name | title }}</th>
+        <th class="original">{{ formset.view.get_title | title }}</th>
         {% block headers %}
         {% for field in formset.fields %}
           {% if not field.widget.is_hidden %}

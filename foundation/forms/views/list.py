@@ -37,7 +37,7 @@ class ListView(FormSetMixin, FormControllerViewMixin, ListMixin, list.ListView):
         return handler
 
     def get_context_data(self, **kwargs):
-        kwargs.update(
-            formset=self.formset,
-        )
+        kwargs.update({
+            'formset': self.formset,
+        })
         return super(ListView, self).get_context_data(**kwargs)

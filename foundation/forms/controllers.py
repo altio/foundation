@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from .. import backend
 from . import models
-from .views.base import ViewChild
+from .views.base import FormChild, FormParent
 from .viewsets import FormViewSet
 
 __all__ = 'FormController', 'FormInline'
@@ -39,11 +39,12 @@ class FormController(FormOptions, backend.Controller):
     Convenience Controller with FormViewSet attached to default namespace.
     """
 
-    view_child_class = ViewChild
+    view_child_class = FormChild
+    view_parent_class = FormParent
     viewsets = {
         None: FormViewSet,
     }
 
 
-class FormInline(FormOptions, ViewChild):
+class FormInline(FormOptions, FormChild):
     pass

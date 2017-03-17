@@ -131,7 +131,7 @@
         {% for label, url in view.get_breadcrumbs %}
           <li{% if forloop.last %} class="active"{% endif %}>
             {% if url %}<a href="{{ url }}">{% endif %}
-            {% trans label %}
+            {% trans label|title %}
             {% if url %}</a>{% endif %}
           </li>
         {% endfor %}

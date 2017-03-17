@@ -211,7 +211,11 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 is_visible = True
             if is_visible:
                 try:
-                    is_visible = resolve_url(app_config.label + ':index')
+                    is_visible = (
+                        resolve_url('/' + app_config.url_prefix)
+                        if app_config.url_prefix
+                        else False
+                    )
                 except NoReverseMatch:
                     is_visible = False
             available_apps[app_config] = is_visible

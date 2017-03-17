@@ -21,7 +21,7 @@
       {% endif %}
     {% endblock %}
     {% endcomment %}
-    <h3>{{ formset.view.verbose_name_plural|capfirst }}</h3>
+    <h3>{{ formset.view.get_title|title }}</h3>
       {% include formset.view.view_template %}
     {% block pagination %}{% endblock pagination %}
     </form>
