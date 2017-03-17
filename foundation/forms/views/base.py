@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
+
 from django.forms.models import _get_foreign_key
 from django.shortcuts import resolve_url
 from django.template.defaultfilters import title
@@ -13,10 +15,6 @@ from .components import FormSetMixin
 
 
 class ViewChild(FormSetMixin, views.ViewChild):
-
-    @property
-    def list_template(self):
-        self.list_templates[self.list_template_name]
 
     def get_permissions_model(self):
         permissions_model = super(ViewChild, self).get_permissions_model()
@@ -43,6 +41,13 @@ class ViewChild(FormSetMixin, views.ViewChild):
         if not url:
             url = super(ViewChild, self).get_url(mode, **kwargs)
         return url
+
+    @property
+    def inline_template(self):
+        return os.path.join(
+            self.template_paths[self.inline_template],
+            self.template_name
+        )
 
 
 class FormControllerViewMixin(views.ControllerViewMixin, views.BackendTemplateMixin):
@@ -138,3 +143,12 @@ class FormControllerViewMixin(views.ControllerViewMixin, views.BackendTemplateMi
         breadcrumbs.append(self.get_breadcrumb(self.mode))
 
         return breadcrumbs
+
+    @property
+    def view_template(self):
+        return os.path.join(
+            self.template_paths[self.list_template
+                                if self.mode=='list'
+                                else self.object_template],
+            self.template_name
+        )

@@ -1,0 +1,43 @@
+{% if formset_form.non_field_errors %}
+<tr><td colspan="{{ formset_form|cell_count }}">{{ formset_form.non_field_errors }}</td></tr>
+{% endif %}
+<tr class="{% if forloop.last %}empty-form{% endif %} {% block rowclasses %}{% endblock %}"
+     id="{{ formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}" {% block rowattrs %}{% endblock %}>
+
+  {% block columns-original %}
+  <td class="original">
+    {% if formset_form.needs_explicit_pk_field %}{{ formset_form.pk_field }}{% endif %}
+    {{ formset_form.fk_field }}
+    {% spaceless %}
+    {% for field in formset_form %}
+      {% if field.is_hidden %} {{ field }} {% endif %}
+    {% endfor %}
+    {% endspaceless %}
+  </td>
+  <td>{% block object-link %}{% if formset_form.original and not formset_form.view.edit %}<a href="{% mode_url 'display' formset_form %}">{{ formset_form.original }}</a>{% endif %}{% endblock %}</td>
+  {% endblock %}
+
+  {% block columns %}
+  {% for field in formset_form %}
+    {% block field %}
+    {% if not field.is_hidden %}
+      <td{% if field.name %} class="field-{{ field.name }}"{% endif %}>
+        {% include 'fragments/field.html' %}
+      </td>
+      {% endif %}
+    {% endblock field %}
+  {% endfor %}
+  {% endblock %}
+
+  {% block column-actions %}
+  <td class="text-right">
+    {% if formset.view.has_edit_permission %}
+      <a href="{% mode_url 'edit' formset_form %}" class="btn btn-xs btn-primary"><i class="fa fa-edit fa-fw"></i></a>&nbsp;
+    {% endif %}
+    {% if formset.view.has_delete_permission %}
+      <a href="{% mode_url 'delete' formset_form %}" class="btn btn-xs btn-danger"><i class="fa fa-trash fa-fw"></i></a>
+    {% endif %}
+  </td>
+  {% endblock %}
+
+</tr>

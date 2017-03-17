@@ -6,7 +6,7 @@ from . import models
 from .views.base import ViewChild
 from .viewsets import FormViewSet
 
-__all__ = 'Controller', 'ViewChild', 'StackedInline', 'TabularInline'
+__all__ = 'FormController', 'FormInline'
 
 
 class FormOptions(object):
@@ -24,13 +24,17 @@ class FormOptions(object):
     formset_class = models.BaseModelFormSet
     inlineformset_class = models.BaseInlineFormSet
 
-    list_templates = {
-        'stacked': 'fragments/list/stacked.html',
-        'tabular': 'fragments/list/tabular.html',
+    template_paths = {
+        'stacked': 'fragments/stacked',
+        'tabular': 'fragments/tabular',
     }
 
+    list_template = 'tabular'
+    object_template = 'stacked'
+    inline_template = 'tabular'
 
-class Controller(FormOptions, backend.Controller):
+
+class FormController(FormOptions, backend.Controller):
     """
     Convenience Controller with FormViewSet attached to default namespace.
     """
@@ -43,11 +47,3 @@ class Controller(FormOptions, backend.Controller):
 
 class FormInline(FormOptions, ViewChild):
     pass
-
-
-class StackedInline(FormInline):
-    list_template_name = 'stacked'
-
-
-class TabularInline(FormInline):
-    list_template_name = 'tabular'

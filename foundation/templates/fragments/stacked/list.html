@@ -16,7 +16,7 @@
       </h3>
     {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
     {% for fieldset in form.fieldsets %}
-      {% include "fragments/fieldset.html" %}
+      {% include "fragments/stacked/fieldset.html" %}
     {% endfor %}
     {% if form.needs_explicit_pk_field %}{{ form.pk_field }}{% endif %}
     {{ form.fk_field }}
