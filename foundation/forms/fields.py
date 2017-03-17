@@ -13,15 +13,15 @@ def get_bound_field(self, form, field_name):
     formfield callbacks that are form- (and controller) aware.
     """
     bound_field_cls = BoundField
-    view = getattr(form, 'view', None)
-    if view:
-        formfield_callback = getattr(view, 'formfield_callback', None)
+    view_controller = getattr(form, 'view_controller', None)
+    if view_controller:
+        formfield_callback = getattr(view_controller, 'formfield_callback', None)
         if formfield_callback:
             formfield_callback(self)
-        widget_callback = getattr(view, 'widget_callback', None)
+        widget_callback = getattr(view_controller, 'widget_callback', None)
         if widget_callback:
             widget_callback(self.widget)
-        bound_field_cls = getattr(view, 'bound_field_class', bound_field_cls)
+        bound_field_cls = getattr(view_controller, 'bound_field_class', bound_field_cls)
     return bound_field_cls(form, self, field_name)
 
 

@@ -129,13 +129,13 @@ class ControllerViewMixin(BaseViewController):
 
         kwargs = self.kwargs.copy()
         parents = []
-        view = self
+        view_controller = self
 
-        while view.controller.parent:
-            kwargs.pop(view.controller.model_lookup, None)
-            controller = view.controller.parent
-            view = controller.get_view_parent(view=view, kwargs=kwargs)
-            parents.append(view)
+        while view_controller.controller.parent:
+            kwargs.pop(view_controller.controller.model_lookup, None)
+            controller = view_controller.controller.parent
+            view_controller = controller.get_view_parent(view=self, kwargs=kwargs)
+            parents.append(view_controller)
             kwargs = kwargs.copy()
 
         return tuple(parents)

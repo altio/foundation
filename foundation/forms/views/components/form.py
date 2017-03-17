@@ -173,7 +173,7 @@ class BaseModelFormMixin(object):
         kwargs = super(BaseModelFormMixin, self).get_form_kwargs()
         kwargs['fieldsets'] = self.get_fieldsets(self.mode)
         kwargs['prepopulated_fields'] = {}  # TODO: do this thing
-        kwargs['view'] = self
+        kwargs['view_controller'] = self
         return kwargs
 
     def save_form(self, change):

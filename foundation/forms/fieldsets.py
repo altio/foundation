@@ -8,7 +8,7 @@ from django.utils.safestring import mark_safe
 
 
 class Fieldline(object):
-    def __init__(self, form, fieldline, readonly_fields=None, view=None):
+    def __init__(self, form, fieldline, readonly_fields=None, view_controller=None):
         self.form = form
         self.fields = [fieldline] if not hasattr(fieldline, "__iter__") or isinstance(
             fieldline, six.text_type
@@ -18,7 +18,7 @@ class Fieldline(object):
             self.form.fields[field].widget.is_hidden
             for field in self.fields
         )
-        self.view = view
+        self.view_controller = view_controller
         if readonly_fields is None:
             readonly_fields = ()
         self.readonly_fields = readonly_fields
@@ -42,13 +42,13 @@ class Fieldline(object):
 
 class Fieldset(object):
     def __init__(self, form, name=None, readonly_fields=(), fields=(),
-                 classes=(), description=None, view=None):
+                 classes=(), description=None, view_controller=None):
         self.form = form
         self.name = name
         self.fields = fields
         self.classes = ' '.join(classes)
         self.description = description
-        self.view = view
+        self.view_controller = view_controller
         self.readonly_fields = readonly_fields
 
     @property
@@ -59,7 +59,7 @@ class Fieldset(object):
         for fieldline in self.fields:
             yield Fieldline(form=self.form, fieldline=fieldline,
                             readonly_fields=self.readonly_fields,
-                            view=self.view)
+                            view_controller=self.view_controller)
 
 
 class InlineFieldset(Fieldset):
@@ -74,4 +74,4 @@ class InlineFieldset(Fieldset):
                 continue
             yield Fieldline(form=self.form, field=field,
                             readonly_fields=self.readonly_fields,
-                            view=self.view)
+                            view_controller=self.view_controller)

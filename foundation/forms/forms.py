@@ -19,7 +19,7 @@ class BackendFormMixin(object):
     fieldset_class = Fieldset
 
     def __init__(self, fieldsets, prepopulated_fields, readonly_fields=None,
-                 view=None, **kwargs):
+                 view_controller=None, **kwargs):
         super(BackendFormMixin, self).__init__(**kwargs)
         self._fieldsets = []
         for name, options in fieldsets:
@@ -31,14 +31,14 @@ class BackendFormMixin(object):
             options = options.copy()
             options['name'] = options.pop('name', name)
             self._fieldsets.append(
-                (key, self.fieldset_class(form=self, view=view, **options))
+                (key, self.fieldset_class(form=self, view_controller=view_controller, **options))
             )
         self._fieldsets = OrderedDict(self._fieldsets)
         self.prepopulated_fields = [{
             'field': self[field_name],
             'dependencies': [self[f] for f in dependencies]
         } for field_name, dependencies in prepopulated_fields.items()]
-        self.view = view
+        self.view_controller = view_controller
         if readonly_fields is None:
             readonly_fields = ()
         self.readonly_fields = readonly_fields
@@ -84,11 +84,11 @@ class BackendFormMixin(object):
     @cached_property
     def tabs(self):
         tab_list = []
-        for tab_name in self.view.controller.tabs:
+        for tab_name in self.view_controller.controller.tabs:
             try:
                 tab = self[tab_name]
             except KeyError:
-                tab = self.view.children[tab_name]
+                tab = self.view_controller.children[tab_name]
             tab_list.append((tab_name, tab))
         return OrderedDict(tab_list)
 

@@ -17,22 +17,22 @@ class IfPermissionNode(Node):
         obj = self.obj.resolve(context, True) if self.obj else None
 
         if obj is None:
-            view = context['view']
+            view_controller = context['view']
             if 'form' in context:
                 obj = context['form'].instance
         elif isinstance(obj, models.BaseModelFormSet):
-            view = obj.view
+            view_controller = obj.view_controller
             obj = None
         elif isinstance(obj, models.FormSetModelForm):
-            view = obj.view
+            view_controller = obj.view_controller
             obj = obj.original
         elif isinstance(obj, models.ModelForm):
-            view = obj.view
+            view_controller = obj.view_controller
             obj = obj.instance
         else:
             raise ValueError('"obj" is unsupported type: {}'.format(type(obj)))
 
-        if (obj.has_permission(view, mode) if obj else view.has_permission(mode)):
+        if (obj.has_permission(view_controller, mode) if obj else view_controller.has_permission(mode)):
             return self.nodelist_true.render(context)
         return self.nodelist_false.render(context)
 
@@ -79,19 +79,19 @@ def mode_url(context, mode, obj=None, route=None):
 
     # derive a view controller from context or supported types
     if obj is None:
-        view = context['view']
+        view_controller = context['view']
         if 'form' in context:
             obj = context['form'].instance
     elif isinstance(obj, models.BaseModelFormSet):
-        view = obj.view
+        view_controller = obj.view_controller
         obj = None
     elif isinstance(obj, models.FormSetModelForm):
-        view = obj.view
+        view_controller = obj.view_controller
         obj = obj.original
     elif isinstance(obj, models.ModelForm):
-        view = obj.view
+        view_controller = obj.view_controller
         obj = obj.instance
     else:
         raise ValueError('"obj" is unsupported type: {}'.format(type(obj)))
 
-    return view.get_url(mode, obj=obj, route=route)
+    return view_controller.get_url(mode, obj=obj, route=route)
