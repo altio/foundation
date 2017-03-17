@@ -31,12 +31,12 @@
 
   {% block column-actions %}
   <td class="text-right">
-    {% if formset.view.has_edit_permission %}
-      <a href="{% mode_url 'edit' formset_form %}" class="btn btn-xs btn-primary"><i class="fa fa-edit fa-fw"></i></a>&nbsp;
-    {% endif %}
-    {% if formset.view.has_delete_permission %}
-      <a href="{% mode_url 'delete' formset_form %}" class="btn btn-xs btn-danger"><i class="fa fa-trash fa-fw"></i></a>
-    {% endif %}
+    {% ifpermission 'edit' formset_form %}
+      <a href="{% mode_url 'edit' formset_form %}">Edit</a>&nbsp;
+    {% endifpermission %}
+    {% ifpermission 'delete' formset_form %}
+      <a href="{% mode_url 'delete' formset_form %}">Delete</a>
+    {% endifpermission %}
   </td>
   {% endblock %}
 

@@ -25,8 +25,10 @@
 
         {% block headers-actions %}
         <th>
-          {% if not view.edit and formset.view.has_add_permission %}
-          <a href="{% mode_url 'add' formset %}">{% trans ' Add New ' %}{{ formset.view.verbose_name|title }}</a>
+          {% if not view.edit %}
+            {% ifpermission 'add' %}
+              <a href="{% mode_url 'add' formset %}">{% trans ' Add New ' %}{{ formset.view.verbose_name|title }}</a>
+            {% endifpermission %}
           {% endif %}
         </th>
         {% endblock %}
