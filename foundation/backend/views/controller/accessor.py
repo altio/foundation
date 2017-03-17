@@ -83,7 +83,7 @@ class ModelPermissionsMixin(AppPermissionsMixin):
         # - app is NOT public
         # - user is NOT an acting superuser
         user = self.view.request.user
-        if not (getattr(self.app_config, 'is_public', False) or self.is_superuser(user)):
+        if not (self.public_modes or self.is_superuser(user)):
             auth_query = self.auth_query
             if auth_query:
                 queryset = queryset.filter(**{auth_query: user})

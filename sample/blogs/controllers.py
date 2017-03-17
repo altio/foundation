@@ -10,7 +10,7 @@ class ViewMixin(object):
     dictionary on the controller. """
 
 
-class APIFormController(forms.Controller):
+class APIFormController(forms.FormController):
 
     viewsets = {
         None: forms.FormViewSet,
@@ -31,6 +31,7 @@ class BlogController(APIFormController):
 
     # auth
     fk_name = 'owner'
+    public_modes = ('list', 'display')
 
     fieldsets = {
         'public': (

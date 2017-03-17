@@ -94,6 +94,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             except NotRegistered:
                 continue
 
+            # if any controllers have public modes, app is public
+            if controller.public_modes:
+                app_config.has_public_views = True
+
             controller_namespace = controller.model_namespace
             controller_prefix = controller.url_prefix
 
@@ -131,6 +135,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
         # URL auto-loader traverses all installed apps
         for app_config in utils.get_project_app_configs():
+
+            # presume app configs are private
+            app_config.has_public_views = False
+
             app_namespace = getattr(app_config,
                                     'url_namespace',
                                     app_config.label)
@@ -197,7 +205,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         for app_config in sorted(utils.get_project_app_configs(),
                                  key=lambda app_config: app_config.label):
             is_visible = False
-            if getattr(app_config, 'is_public', False):
+            if app_config.has_public_views:
                 is_visible = True
             elif user.has_module_perms(app_config.label):
                 is_visible = True

@@ -86,7 +86,7 @@ class AppPermissionsMixin(BackendMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not (getattr(self.app_config, 'is_public', False) or
+        if not (self.app_config.has_public_views or
                 request.user.has_module_perms(self.app_config.label)):
             return redirect_to_url(request, settings.LOGIN_URL)
         return super(AppPermissionsMixin, self).dispatch(

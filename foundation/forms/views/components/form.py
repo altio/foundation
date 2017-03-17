@@ -14,15 +14,10 @@ from .... import forms
 from ....utils import flatten_fieldsets
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
-           'VERTICAL', 'PUBLIC_MODES', 'PRIVATE_MODES',
-           'FORMFIELD_FOR_DBFIELD_DEFAULTS')
+           'VERTICAL', 'FORMFIELD_FOR_DBFIELD_DEFAULTS')
 
 
 HORIZONTAL, VERTICAL = 1, 2
-
-PUBLIC_MODES = ('list', 'view', 'display')
-PRIVATE_MODES = ('add', 'edit')
-
 
 FORMFIELD_FOR_DBFIELD_DEFAULTS = {
 }
@@ -70,10 +65,11 @@ class BaseModelFormMixin(object):
         # fields can be a mode:whitelist dictionary
         if isinstance(self.fields, dict):
             fields = self.fields.get(mode)
-            if fields is None and mode in PRIVATE_MODES:
-                fields = self.fields.get('private', self.fields.get('public'))
-            elif fields is None and mode in PUBLIC_MODES:
-                fields = self.fields.get('public')
+            if fields is None:
+                if mode not in self.public_modes:
+                    fields = self.fields.get('private')
+                if fields is None:
+                    fields = self.fields.get('public')
         else:
             fields = self.fields
 
@@ -87,10 +83,11 @@ class BaseModelFormMixin(object):
         # fieldsets can be a mode:fieldsets dictionary
         if isinstance(self.fieldsets, dict):
             fieldsets = self.fieldsets.get(mode)
-            if fieldsets is None and mode in PRIVATE_MODES:
-                fieldsets = self.fieldsets.get('private', self.fieldsets.get('public'))
-            elif fieldsets is None and mode in PUBLIC_MODES:
-                fieldsets = self.fieldsets.get('public')
+            if fieldsets is None:
+                if mode not in self.public_modes:
+                    fieldsets = self.fieldsets.get('private')
+                if fieldsets is None:
+                    fieldsets = self.fieldsets.get('public')
         else:
             fieldsets = self.fieldsets
 

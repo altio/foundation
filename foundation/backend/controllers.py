@@ -34,6 +34,8 @@ class Controller(Router, BaseController):
     filter_horizontal = ()
     filter_vertical = ()
 
+    public_modes = ()
+
     def __init__(self, parent, registrar=None):
         """
         Initializes a Model Controller for eventual registration as a Backend
@@ -106,7 +108,7 @@ class Controller(Router, BaseController):
             child_urlpatterns = child_controller.get_urlpatterns()
             for name, patterns in child_urlpatterns.items():
                 urlpatterns[name].append(
-                    url(r'^(?P<{lookup}>[-\w]+)/{prefix}/'.format(
+                    url(r'^(?P<{lookup}>[-\w]+)/{prefix}'.format(
                             lookup=self.model_lookup,
                             prefix=child_prefix
                         ),

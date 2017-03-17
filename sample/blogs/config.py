@@ -13,9 +13,6 @@ def create_fixtures(apps, **kwargs):
 
 class BlogsConfig(AppConfig):
 
-    # this flag determines whether to expose the public views
-    is_public = True
-
     name = 'blogs'
     url_namespace = 'blogs'
     url_prefix = 'blogs'
