@@ -94,7 +94,6 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         # from render_change_form
         request = self.request
         opts = self.model._meta
-        app_label = opts.app_label
 
         # from changeform_view
         object_id = None
@@ -103,13 +102,7 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         add = object_id is None
 
         kwargs.update({
-            'mode': self.mode,
-            'has_add_permission': self.has_permission('add'),
-            'has_change_permission': self.has_permission('edit', obj=self.object),
-            'has_delete_permission': self.has_permission('delete', obj=self.object),
             'opts': opts,
-            'app_label': app_label,
-            'title': _(self.mode_title),
             'form': self.form,
             'object_id': object_id,
             'inline_formsets': self.inline_formsets,
