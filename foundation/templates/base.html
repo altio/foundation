@@ -24,8 +24,9 @@
     <header class="{% block headerclass %}{% endblock %}"{% block headerattr %}{% endblock %}>
       {% block header %}
       <div>
-      {# This is not a guarantee... make it conditional #}
-      <a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a>
+      {% if user.is_staff %}
+        <a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a>
+      {% endif %}
       {% for app, is_visible in available_apps.items %}
         {% if is_visible and app.index_url_name %}
            {% if not forloop.last %}&nbsp;|&nbsp;{% endif %}

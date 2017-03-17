@@ -35,11 +35,13 @@
                       <li><a href="#"><i class="fa fa-ban fa-fw"></i> Ban</a></li>
                       <li class="divider"></li>
                       {% if user.is_superuser %}
-                         {% if request.session.act_as_superuser %}
-                         <li><a href="{{request.path}}"><i class="i"></i> Remove superuser</a></li>
-                         {% else %}
-                         <li><a href="{{request.path}}"><i class="i"></i> Elevate to superuser</a></li>
-                         {% endif %}
+                        <li><a href="{% url 'toggle_superuser' %}">
+                          {% if request.session.act_as_superuser %}
+                            {% trans 'Remove superuser' %}
+                          {% else %}
+                            {% trans 'Elevate to superuser' %}
+                          {% endif %}
+                        </a></li>
                       {% endif %}
                       <li class="divider"></li>
                       {% if user.is_staff %}
