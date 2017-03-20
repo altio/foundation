@@ -41,7 +41,8 @@ class FormSetModelForm(ModelForm):
         self.show_url = True  # original and view_on_site_url is not None
         # self.absolute_url = view_on_site_url
         super(FormSetModelForm, self).__init__(
-            fieldsets, prepopulated_fields, readonly_fields, instance=instance, **kwargs)
+            fieldsets, prepopulated_fields, readonly_fields=readonly_fields,
+            instance=instance, **kwargs)
 
     def needs_explicit_pk_field(self):
         # Auto fields are editable (oddly), so need to check for auto or non-editable pk

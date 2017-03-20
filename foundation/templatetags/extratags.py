@@ -20,6 +20,9 @@ class IfPermissionNode(Node):
             view_controller = context['view']
             if 'form' in context:
                 obj = context['form'].instance
+        elif isinstance(obj, models.BaseInlineFormSet):
+            view_controller = obj.view_controller
+            obj = obj.instance
         elif isinstance(obj, models.BaseModelFormSet):
             view_controller = obj.view_controller
             obj = None
@@ -82,6 +85,9 @@ def mode_url(context, mode, obj=None, route=None):
         view_controller = context['view']
         if 'form' in context:
             obj = context['form'].instance
+    elif isinstance(obj, models.BaseInlineFormSet):
+        view_controller = obj.view_controller
+        obj = obj.instance
     elif isinstance(obj, models.BaseModelFormSet):
         view_controller = obj.view_controller
         obj = None

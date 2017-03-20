@@ -1,6 +1,6 @@
 {# expects have form and fieldset (iterating over form) in context #}
 <fieldset class="module aligned {{ fieldset.classes }}">
-    {% if fieldset.name %}<h4>{{ fieldset.name }}</h4>{% endif %}
+    {% if fieldset.name %}<h4>{{ fieldset.name|title }}</h4>{% endif %}
     {% if fieldset.description %}
         <div class="description">{{ fieldset.description|safe }}</div>
     {% endif %}

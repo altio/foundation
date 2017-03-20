@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from collections import OrderedDict
 from django.utils.functional import cached_property
 
 from ...controller.base import BaseController
 from ...controller import MultipleObjectMixin, SingleObjectMixin
 from .accessor import ModelPermissionsMixin
 from .resolver import ChainingMixin
+from django.forms.models import _get_foreign_key
 
 __all__ = 'ViewParent', 'ViewChild', 'ControllerViewMixin'
 
@@ -69,6 +69,14 @@ class BaseViewController(ChainingMixin, ModelPermissionsMixin, BaseController):
 
 class ViewChild(MultipleObjectMixin, BaseViewController):
 
+    @property
+    def view_parent(self):
+        return self.view
+
+    @property
+    def kwargs(self):
+        return self.view_parent.kwargs
+
     def get_permissions_model(self):
         permissions_model = super(ViewChild, self).get_permissions_model()
 
@@ -81,19 +89,6 @@ class ViewChild(MultipleObjectMixin, BaseViewController):
                     break
 
         return permissions_model
-
-    def get_queryset(self):
-        # early exit if this is an inline in edit mode and we are not permitted
-        if self.view.add or self.view.edit and not self.has_permission('edit'):
-            return self.model._default_manager.get_queryset().none()
-
-        return super(ViewChild, self).get_queryset()
-
-    def get_url(self, mode, **kwargs):
-        url = self.view.get_url(mode, self.controller, **kwargs)
-        if not url:
-            url = super(ViewChild, self).get_url(mode, **kwargs)
-        return url
 
 
 class ViewParent(MultipleObjectMixin, SingleObjectMixin, BaseViewController):
@@ -121,36 +116,13 @@ class ControllerViewMixin(BaseViewController):
                                                   **kwargs)
 
     @cached_property
-    def view_parents(self):
-        """
-        A list of view-aware parent controllers linked to their registered
-        counterparts.
-        """
-
-        kwargs = self.kwargs.copy()
-        parents = []
-        view_controller = self
-
-        while view_controller.controller.parent:
-            kwargs.pop(view_controller.controller.model_lookup, None)
-            controller = view_controller.controller.parent
-            view_controller = controller.get_view_parent(view=self, kwargs=kwargs)
-            parents.append(view_controller)
-            kwargs = kwargs.copy()
-
-        return tuple(parents)
-
-    @cached_property
-    def view_parent(self):
-        return self.view_parents[0] if self.view_parents else None
-
-    @cached_property
     def view_children(self):
         """
         A list of ViewChild (or subclassed) instances representing each of the
-        children for this view's controller followed by each inline.
+        registered and inline children for this view's controller as accessed
+        by their related name (e.g. default of "model_name_set").
         """
-        named_children = []
+        named_children = {}
         for registered_child_class in self.controller.children:
             registered_model = registered_child_class.model
             registered_child = (
@@ -159,11 +131,13 @@ class ControllerViewMixin(BaseViewController):
                 else self.backend.get_registered_controller(registered_model)
             )
             child = registered_child.get_view_child(self)
-            named_children.append((child.model_name, child))
+            name = _get_foreign_key(self.model, child.model).rel.get_accessor_name()
+            named_children[name] = child
         for inline_controller_class in self.controller.inlines:
             child = inline_controller_class(self)
-            named_children.append((child.model_name, child))
-        return OrderedDict(named_children)
+            name = _get_foreign_key(self.model, child.model).rel.get_accessor_name()
+            named_children[name] = child
+        return named_children
 
     def get_related_controller(self, model):
         """

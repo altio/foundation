@@ -12,6 +12,7 @@ from ...utils import flatten_fieldsets, get_deleted_objects
 from ...backend import views
 from .base import FormControllerViewMixin
 from .components import BaseModelFormMixin
+from django.core.exceptions import FieldError
 
 
 __all__ = 'AddView', 'EditView', 'DisplayView', 'DeleteView'
@@ -57,32 +58,27 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         self.form = self.get_form()
         return handler
 
-    def get_formsets_with_inlines(self, obj=None):
+    def get_inline_formsets(self, obj):
         """
-        Yields tuples of FormSet class and InlineController instances.
+        Return the InlineFormSet for this View via the ViewChild.
+        TODO: Better handle the case where of no child controller (e.g. a check)
         """
-        for view_child in self.view_children.values():
-            yield view_child.get_formset_class(obj), view_child
-
-    def get_inline_formsets(self, obj, change):
-        "Helper function to generate InlineFormSets."
-        inline_formsets = []
-        obj = obj if change else None
-        fields = flatten_fieldsets(self.get_fieldsets(self.mode))
-        for InlineFormSet, inline in self.get_formsets_with_inlines(obj):
+        obj = None if self.add else self.object
+        # fields = flatten_fieldsets(self.get_fieldsets(self.mode))
+        inline_formsets = {}
+        for name, view_child in self.view_children.items():
             inline_fk_field = _get_foreign_key(
-                self.model, inline.model, inline.fk_name)
-            if inline_fk_field.remote_field.name not in fields:
-                continue
-            formset_kwargs = inline.get_formset_kwargs(
-                formset_class=InlineFormSet, obj=obj)
-            inline_formsets.append(InlineFormSet(**formset_kwargs))
+                self.model, view_child.model, view_child.fk_name)
+            # if inline_fk_field.remote_field.name not in fields:
+            #     continue  # TODO: Fail Check
+            formset_class = view_child.get_formset_class(obj)
+            formset_kwargs = view_child.get_formset_kwargs(
+                formset_class=formset_class, obj=obj)
+            inline_formsets[name] = formset_class(**formset_kwargs)
         return inline_formsets
 
     def get(self, request, *args, **kwargs):
-        self.inline_formsets = self.get_inline_formsets(
-            self.object, change=not self.add
-        )
+        self.inline_formsets = self.get_inline_formsets(self.object)
         return super(ProcessFormView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -93,11 +89,10 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
             form_validated = False
             new_object = self.form.instance
         new_object._controller = self
-        self.inline_formsets = self.get_inline_formsets(
-            new_object, change=not self.add
-        )
-        # val all formsets *first* to ensure we report them when invalid
-        if forms.all_valid(self.inline_formsets) and form_validated:
+        self.inline_formsets = self.get_inline_formsets(new_object)
+
+        # val all formsets *first* to ensure we report them when form invalid
+        if forms.all_valid(self.inline_formsets.values()) and form_validated:
             self.object = new_object
             self.save_model(not self.add)
             self.save_related(not self.add)
@@ -108,7 +103,7 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
     def get_media(self):
         media = super(ProcessFormView, self).get_media()
         media += self.form.media
-        for inline_formset in self.inline_formsets:
+        for inline_formset in self.inline_formsets.values():
             media += inline_formset.media
         return media
 
@@ -125,7 +120,6 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         kwargs.update({
             'form': self.form,
             'object_id': object_id,
-            'inline_formsets': self.inline_formsets,
         })
 
         return super(ProcessFormView, self).get_context_data(**kwargs)

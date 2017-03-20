@@ -29,9 +29,9 @@ class FormOptions(object):
         'tabular': 'fragments/tabular',
     }
 
-    list_template = 'tabular'
-    object_template = 'stacked'
-    inline_template = 'tabular'
+    list_style = 'tabular'
+    object_style = 'stacked'
+    inline_style = 'tabular'
 
 
 class FormController(FormOptions, backend.Controller):

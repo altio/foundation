@@ -71,7 +71,7 @@ class BaseModelFormMixin(object):
                 if fields is None:
                     fields = self.fields.get('public')
         else:
-            fields = self.fields
+            fields = self.controller.fields
 
         return fields
 
@@ -114,11 +114,26 @@ class BaseModelFormMixin(object):
                   if 'fields' in kwargs
                   else flatten_fieldsets(self.get_fieldsets(self.view.mode, obj)))
 
+        # it is important to note that there are two "readonly_fields" concepts:
+        # 1. the readonly_fields on the controller itself, which persist down to
+        #    the view, and;
+        # 2. the extra readonly_fields accumulated here and then excluded from
+        #    form construction
+        exclude = [] if self.exclude is None else list(self.exclude)
+        readonly_fields = list(self.get_readonly_fields(obj))
+
         # had to put '__all__' in a list for it to pass through flatten...
         if len(fields) == 1 and fields[0] in (None, forms.ALL_FIELDS):
             fields = fields[0]
-        exclude = [] if self.exclude is None else list(self.exclude)
-        readonly_fields = self.get_readonly_fields(obj)
+        # otherwise prune attributes, callables, and related object accessors
+        else:
+            model_fields = tuple(f.name for f in self.model._meta.get_fields())
+            # work backwards through field list, pruning readonly fields
+            for i in reversed(range(len(fields))):
+                if fields[i] not in model_fields:
+                    if fields[i] not in readonly_fields:
+                        readonly_fields.append(fields[i])
+                    del fields[i]
         exclude.extend(readonly_fields)
 
         # formset_form exists in both model types
@@ -171,8 +186,10 @@ class BaseModelFormMixin(object):
 
     def get_form_kwargs(self):
         kwargs = super(BaseModelFormMixin, self).get_form_kwargs()
+        obj = kwargs.get('instance')
         kwargs['fieldsets'] = self.get_fieldsets(self.mode)
-        kwargs['prepopulated_fields'] = {}  # TODO: do this thing
+        kwargs['prepopulated_fields'] = self.get_prepopulated_fields(self.mode, obj=obj)
+        kwargs['readonly_fields'] = self.get_readonly_fields(self.mode, obj=obj)
         kwargs['view_controller'] = self
         return kwargs
 
@@ -210,7 +227,7 @@ class BaseModelFormMixin(object):
         already been called.
         """
         self.form.save_m2m()
-        for inline_formset in self.inline_formsets:
+        for inline_formset in self.inline_formsets.values():
             self.save_formset(inline_formset, change=change)
 
     def formfield_for_dbfield(self, db_field, **kwargs):

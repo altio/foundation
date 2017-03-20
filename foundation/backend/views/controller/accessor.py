@@ -9,29 +9,53 @@ from ..base import AppPermissionsMixin
 class ModelPermissionsMixin(AppPermissionsMixin):
 
     @cached_property
+    def view_parent(self):
+        view_parent = None
+
+        # if registered controller [guarantee on View(Parent)] has parent
+        if self.controller.parent:
+            kwargs = self.kwargs.copy()
+            kwargs.pop(self.controller.model_lookup, None)
+            parent = self.controller.parent
+            view_parent = parent.get_view_parent(view=self.view, kwargs=kwargs)
+
+        return view_parent
+
+    @property
+    def view_parents(self):
+        view_parent = self.view_parent
+        while view_parent:
+            yield view_parent
+            view_parent = view_parent.view_parent
+
+    @cached_property
     def user(self):
         return self.view.request.user
+
+    @cached_property
+    def auth_user_query(self):
+        auth_user_query = (
+            self.fk_name
+            if self.controller.is_root
+            else (
+                '__'.join([self.fk.name, self.view_parent.auth_user_query])
+                if self.view_parent.auth_user_query
+                else None
+        ))
+        return auth_user_query 
+
+    @cached_property
+    def auth_query(self):
+        return (
+            {self.auth_user_query: self.user}
+            if self.auth_user_query and self.user.is_active
+            else {}
+        )
 
     @property
     def has_acting_superuser(self):
         return self.user.is_superuser and \
             self.view.request.session.get('act_as_superuser')
-
-    @cached_property
-    def auth_user_query(self):
-        auth_query = (
-            self.fk_name
-            if self.controller.is_root
-            else (
-                '__'.join([self.fk.name, self.view_parent.auth_query])
-                if self.view_parent.auth_query
-                else None
-        ))
-        return {auth_query: self.user} if auth_query and self.user.is_active else {}
-
-    @cached_property
-    def auth_query(self):
-        return self.auth_user_query
 
     @cached_property  # TODO: test this is safe... cloning still works, right?
     def private_queryset(self):

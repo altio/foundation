@@ -20,16 +20,16 @@ class TitleMixin(object):
     def get_title(self):
         if self.mode == 'list':
             ret = (
-                self.view_parent.get_object()
+                str(self.view_parent.get_object())
                 if self.view_parent
                 else _('all') if self.public_modes else str(self.user) + "'s"
             )
             ret += ' {}'.format(self.controller.verbose_name_plural)
         else:
             obj = getattr(self, 'object', None)
-            return ('{} {}'.format(title(self.mode_title), obj)
+            return ('{} {}'.format(title(self.view.mode_title), obj)
                 if obj
-                else title('{} {}'.format(self.mode_title, self.controller.verbose_name)))
+                else title('{} {}'.format(self.view.mode_title, self.controller.verbose_name)))
         return ret
 
 
@@ -38,8 +38,8 @@ class FormChild(TitleMixin, FormSetMixin, views.ViewChild):
     @property
     def inline_template(self):
         return os.path.join(
-            self.template_paths[self.inline_template],
-            self.template_name
+            self.template_paths[self.inline_style],
+            'list.html'
         )
 
 
@@ -98,7 +98,7 @@ class FormControllerViewMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
 
         parent_crumbs = []
         for view_parent in self.view_parents:
-            parent_crumbs.append(view_parent.get_breadcrumb('view'))
+            parent_crumbs.append(view_parent.get_breadcrumb('display'))
             if view_parent.controller.is_local_root:
                 parent_crumbs.append(view_parent.get_breadcrumb('list'))
                 break
@@ -115,8 +115,8 @@ class FormControllerViewMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
     @property
     def view_template(self):
         return os.path.join(
-            self.template_paths[self.list_template
+            self.template_paths[self.list_style
                                 if self.mode=='list'
-                                else self.object_template],
+                                else self.object_style],
             self.template_name
         )

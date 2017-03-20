@@ -17,14 +17,8 @@
   <!-- <form action="{{ app_path }}" method="post">  -->
   <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ view.model_name }}_form" novalidate>{% csrf_token %}{% block form_top %}{% endblock %}
     {% block form %}
-    {% for fieldset in form.fieldsets %}
+    {% for fieldset in form.fieldsets.values %}
       {% include "fragments/stacked/fieldset.html" %}
-    {% endfor %}
-    {% endblock %}
-
-    {% block inline_formsets %}
-    {% for formset in inline_formsets %}
-      {% include formset.view.formset_template %}
     {% endfor %}
     {% endblock %}
 
