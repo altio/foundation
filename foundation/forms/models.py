@@ -41,7 +41,8 @@ class FormSetModelForm(ModelForm):
         self.show_url = True  # original and view_on_site_url is not None
         # self.absolute_url = view_on_site_url
         super(FormSetModelForm, self).__init__(
-            fieldsets, prepopulated_fields, readonly_fields, instance=instance, **kwargs)
+            fieldsets, prepopulated_fields, readonly_fields=readonly_fields,
+            instance=instance, **kwargs)
 
     def needs_explicit_pk_field(self):
         # Auto fields are editable (oddly), so need to check for auto or non-editable pk
@@ -121,14 +122,14 @@ class BackendFormSetMixin(object):
     love they need now.
     """
 
-    def __init__(self, view, fieldsets, prepopulated_fields=None,
+    def __init__(self, view_controller, fieldsets, prepopulated_fields=None,
                  readonly_fields=None, is_readonly=False, **kwargs):
         """
         view is the BaseViewController subclass.  It could be a View,
         ViewParent, or ViewChild (for registered child or inline child).
         """
         super(BackendFormSetMixin, self).__init__(**kwargs)
-        self.view = view
+        self.view_controller = view_controller
         self.fieldsets = fieldsets
         self.is_readonly = is_readonly
         if readonly_fields is None:
@@ -137,7 +138,7 @@ class BackendFormSetMixin(object):
         if prepopulated_fields is None:
             prepopulated_fields = {}
         self.prepopulated_fields = prepopulated_fields
-        self.classes = ' '.join(view.classes) if view.classes else ''
+        self.classes = ' '.join(view_controller.classes) if view_controller.classes else ''
 
     def get_form_kwargs(self, index):
         # satisfy extra kwargs needed by FieldsetForm
@@ -145,7 +146,7 @@ class BackendFormSetMixin(object):
         kwargs.update(formset=self, fieldsets=self.fieldsets,
                       prepopulated_fields=self.prepopulated_fields,
                       readonly_fields=self.readonly_fields,
-                      view=self.view)
+                      view_controller=self.view_controller)
         return kwargs
 
     def fields(self):
@@ -153,16 +154,16 @@ class BackendFormSetMixin(object):
             if field_name in self.readonly_fields:
                 yield {
                     'name': field_name,
-                    'label': label_for_field(field_name, self.view.model, self.view),
+                    'label': label_for_field(field_name, self.view_controller.model, self.view_controller),
                     'widget': {'is_hidden': False},
                     'required': False,
-                    'help_text': help_text_for_field(field_name, self.view.model),
+                    'help_text': help_text_for_field(field_name, self.view_controller.model),
                 }
             else:
                 form_field = self.empty_form.fields[field_name]
                 label = form_field.label
                 if label is None:
-                    label = label_for_field(field_name, self.view.model, self.view)
+                    label = label_for_field(field_name, self.view_controller.model, self.view_controller)
                 yield {
                     'name': field_name,
                     'label': label,
@@ -174,7 +175,7 @@ class BackendFormSetMixin(object):
     @property
     def media(self):
         # get the media for the controller and the formset('s form)
-        media = self.view.media + super(BackendFormSetMixin, self).media
+        media = self.view_controller.media + super(BackendFormSetMixin, self).media
         for fs in self:
             media = media + fs.media
         return media

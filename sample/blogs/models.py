@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from foundation import models
 from django.template.defaultfilters import slugify
+from django.utils import lorem_ipsum
 
 
 class Blog(models.Model):
@@ -17,6 +18,10 @@ class Blog(models.Model):
     )
 
     title = models.CharField(max_length=200)
+
+    @property
+    def description(self):
+        return '\n'.join(lorem_ipsum.paragraphs(3))
 
     def __str__(self):
         return self.title

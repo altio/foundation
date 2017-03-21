@@ -8,84 +8,139 @@ from ..base import AppPermissionsMixin
 
 class ModelPermissionsMixin(AppPermissionsMixin):
 
-    def get_permissions_model(self):
-        return self.model
+    @cached_property
+    def view_parent(self):
+        view_parent = None
 
-    def has_permission(self, mode, obj=None, is_parent=False):
-        """
-        The normal has_perm behavior in the PermissionsMixin gets and caches
-        the static Group and User Permissions and then evaluates whether the
-        User is permitted to take the action against the given Model.
-        This is an adequate entry-level behavior, since all Users will be able
-        to manage their profiles, subscriptions, and registrations.
+        # if registered controller [guarantee on View(Parent)] has parent
+        if self.controller.parent:
+            kwargs = self.kwargs.copy()
+            kwargs.pop(self.controller.model_lookup, None)
+            parent = self.controller.parent
+            view_parent = parent.get_view_parent(view=self.view, kwargs=kwargs)
 
-        That said, our permissions framework has a little more intricacy.  We
-        are going to map all Model instances to an Authoritative tree that
-        understands the relationships of all models in the system and is able to
-        quickly deduce whether a User can act upon a given Model or Model
-        instance.
+        return view_parent
 
-        Since the normal user permissions are restrictive in nature, we can
-        first see if a generic action is *permitted* by the normal means (we
-        expect the answer to be "no" for non-superusers since we do not expect
-        to align many permissions or groups directly to Users.  In the case
-        the normal means returns False, we can invoke the JIT logic as needed.
-        """
+    @property
+    def view_parents(self):
+        view_parent = self.view_parent
+        while view_parent:
+            yield view_parent
+            view_parent = view_parent.view_parent
 
-        # reject inactive and unverified users
-        user = self.view.request.user
-        if not user.is_active:
-            return False
+    @cached_property
+    def user(self):
+        return self.view.request.user
 
-        # attempt to get a user permission the normal way
-        codename = self.get_url_name(mode)
-        has_permission = user.has_perm(codename)
-
-        return has_permission
-
-    def get_model_perms(self, view):
-        return {
-            'add': self.has_permission('add'),
-            'change': self.has_permission('change'),
-            'delete': self.has_permission('delete'),
-        }
-
-    def has_module_perm(self, view):
-        has_module_perm = view.request.has_module_perms(self.app_label)
-        return has_module_perm
+    @cached_property
+    def auth_user_query(self):
+        auth_user_query = (
+            self.fk_name
+            if self.controller.is_root
+            else (
+                '__'.join([self.fk.name, self.view_parent.auth_user_query])
+                if self.view_parent.auth_user_query
+                else None
+        ))
+        return auth_user_query 
 
     @cached_property
     def auth_query(self):
-        """
-        Combined with get_queryset, this is likely where your custom auth will
-        inject itself to yield the desired access control.
-        """
+        return (
+            {self.auth_user_query: self.user}
+            if self.auth_user_query and self.user.is_active
+            else {}
+        )
 
-        # Controllers serving as local roots ought to have a path to User
-        # directly or via their ancestry.  If the root Controller does not spec
-        # an fk_name to a User field, it will be treated as "globally
-        # accessible" from a QS perspective, and provide only list/display views
+    @property
+    def has_acting_superuser(self):
+        return self.user.is_superuser and \
+            self.view.request.session.get('act_as_superuser')
 
-        if self.controller.is_root:
-            return self.fk_name
-        auth_query = self.controller.parent.auth_query
-        if auth_query:
-            auth_query = '__'.join([self.fk.name, auth_query])
-        return auth_query
+    @cached_property  # TODO: test this is safe... cloning still works, right?
+    def private_queryset(self):
 
-    def is_superuser(self, user):
-        return user.is_superuser
-
-    def get_queryset(self):
+        # avoid cyclic dependency
         queryset = super(ModelPermissionsMixin, self).get_queryset()
 
-        # auth constrain when:
-        # - app is NOT public
-        # - user is NOT an acting superuser
-        user = self.view.request.user
-        if not (getattr(self.app_config, 'is_public', False) or self.is_superuser(user)):
-            auth_query = self.auth_query
-            if auth_query:
-                queryset = queryset.filter(**{auth_query: user})
-
+        # if not acting as superuser, apply access controls, filtering down to
+        # none if there are no authorized objects
+        if not self.has_acting_superuser:
+            queryset = (
+                queryset.filter(**self.auth_query)
+                if self.auth_query
+                else queryset.none()
+            )
         return queryset
+
+    def get_queryset(self):
+
+        # do not auth constrain default queryset if controller has public modes
+        return (
+            super(ModelPermissionsMixin, self).get_queryset()
+            if self.public_modes
+            else self.private_queryset
+        )
+
+    def get_permissions_model(self):
+        return self.model
+
+    @cached_property
+    def permissions(self):
+        """
+        Returns the list of permissions this ViewController has available to it
+        given the user attached to the View.
+        """
+
+        # get the model for determining permissions for this view (this matters
+        # for auto-generated through tables)
+        permissions_model = self.get_permissions_model()
+
+        # now resolve to a registered controller for the permissions model
+        # -- this is allowed to be None in the case of an inline controller
+        permissions_controller = (
+            self.controller
+            if self.controller and self.controller.model == permissions_model
+            else self.view.get_related_controller(permissions_model)
+        )
+
+        # get the list of modes for the default route of registered controller
+        if permissions_controller:
+            modes = permissions_controller.get_modes()
+            public_modes = permissions_controller.public_modes
+        # default to only public, list view when an inline (no controller)
+        else:
+            public_modes = modes = ('list')
+
+        # process each mode
+        view_permissions = []
+        for mode in modes:
+
+            # if mode is public, all users have permission
+            if mode in public_modes:
+                view_permissions.append(mode)
+                continue
+
+            # otherwise reject inactive and unverified users
+            if not self.user.is_active:
+                continue
+
+            # if acting superuser, return True
+            if self.has_acting_superuser:
+                view_permissions.append(mode)
+                continue
+
+            # attempt to get a user permission the normal way
+            codename = self.get_url_name(mode)
+            if self.user.has_perm(codename):
+                view_permissions.append(mode)
+
+        return view_permissions
+
+    def has_permission(self, mode):
+        """
+        Returns a boolean whether this ViewController has general access to a
+        specified mode regardless of per-object permissions.
+        """
+
+        return mode in self.permissions

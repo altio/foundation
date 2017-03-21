@@ -49,20 +49,23 @@ class Router(Registry):
         source._modes = NamedRouteList(source.backend)
         urlpatterns = NamedRouteList(source.backend)
 
-        # be nice and getattr to accomodate Django app_configs
+        # be nice and getattr to accommodate Django app_configs
         view_kwargs = dict(router=source, **kwargs)
         for route, viewset in getattr(source, 'viewsets', {}).items():
-            if callable(viewset):
-                source.viewsets[route] = viewset(**view_kwargs)
-            viewset_urlpatterns = source.viewsets[route].get_urlpatterns()
+            # will store instances on source
+            if not hasattr(source, '_viewsets'):
+                source._viewsets = NamedRouter(source.backend)
+            if not route in source._viewsets:
+                source._viewsets[route] = viewset(**view_kwargs)
+            viewset_urlpatterns = source._viewsets[route].get_urlpatterns()
             if viewset_urlpatterns:
                 urlpatterns[route].extend(viewset_urlpatterns)
                 existing_view_names = set(source._modes[route]) & \
-                    set(source.viewsets[route])
+                    set(source._viewsets[route])
                 if existing_view_names:
-                    raise ValueError('Attempted to overwrited existing view'
+                    raise ValueError('Attempted to overwrite existing view'
                                      'names: {}'.format(existing_view_names))
-                source._modes[route].extend(source.viewsets[route])
+                source._modes[route].extend(source._viewsets[route])
         return urlpatterns
 
     def get_modes(self, route=None):

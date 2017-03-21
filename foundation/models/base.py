@@ -40,5 +40,24 @@ class Model(AssociativeMixin, models.Model):
             using=using, update_fields=update_fields
         )
 
+    """
+    NOTE: original approach was to associate all objects with the vc that
+    yielded them.  This was especially useful when lazily using regex to provide
+    attr-style lookups e.g. obj.has_edit_permission.  After more consideration
+    I am leaning toward template tags instead of obj attrs and thus calling
+    helpers with explicit params... I think that will yield better debugging.
+    """
+
+    def has_permission(self, view_controller, mode):
+
+        # if no view-level permission, bail
+        has_permission = view_controller.has_permission(mode)
+
+        # otherwise, refer to the view controller's private (auth) queryset
+        if has_permission:
+            has_permission = self in view_controller.private_queryset
+
+        return has_permission
+
     class Meta:
         abstract = True

@@ -4,19 +4,19 @@
      data-inline-type="stacked"
      data-inline-formset="{{ formset.inline_formset_data }}">
   <fieldset class="module {{ formset.classes }}">
-    <h2>{{ formset.view.verbose_name_plural|capfirst }}</h2>
+    <h2>{{ formset.view_controller.get_title|capfirst }}</h2>
     {{ formset.management_form }}
     {{ formset.non_form_errors }}
     {% for form in formset %}
     <div class="inline-related{% if form.original or form.show_url %} has_original{% endif %}{% if forloop.last %} empty-form last-related{% endif %}" id="{{ formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
-      <h3><b>{{ formset.view.verbose_name|capfirst }}:</b>&nbsp;<span class="inline_label">{% if form.original %}{{ form.original }}{% if form.view.show_change_link and form.view.has_registered_model %} <a href="{% url form.view.opts|admin_urlname:'change' form.original.pk|admin_urlquote %}" class="inlinechangelink">{% trans "Change" %}</a>{% endif %}
+      <h3><b>{{ formset.view_controller.get_title|capfirst }}:</b>&nbsp;<span class="inline_label">{% if form.original %}{{ form.original }}{% if form.view_controller.show_change_link and form.view_controller.has_registered_model %} <a href="{% url form.view_controller.opts|admin_urlname:'change' form.original.pk|admin_urlquote %}" class="inlinechangelink">{% trans "Change" %}</a>{% endif %}
         {% else %}#{{ forloop.counter }}{% endif %}</span>
         {% if form.show_url %}<a href="{{ form.absolute_url }}">{% trans "View on site" %}</a>{% endif %}
         {% if formset.can_delete and form.original %}<span class="delete">{{ form.deletion_field.field }} {{ form.deletion_field.label_tag }}</span>{% endif %}
       </h3>
     {% if form.non_field_errors %}{{ form.non_field_errors }}{% endif %}
     {% for fieldset in form.fieldsets %}
-      {% include "fragments/fieldset.html" %}
+      {% include "fragments/stacked/fieldset.html" %}
     {% endfor %}
     {% if form.needs_explicit_pk_field %}{{ form.pk_field }}{% endif %}
     {{ form.fk_field }}

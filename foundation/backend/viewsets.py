@@ -97,7 +97,7 @@ class ControllerViewSet(BackendViewSet):
         mixins = super(ControllerViewSet, self)._get_view_class_mixins()
         controller = self.router.controller
         for mixin_source in controller.app_config, controller:
-            mixin = getattr(mixin_source, 'view_class_mixin', None)
+            mixin = getattr(mixin_source, 'view_mixin_class', None)
             if mixin:
                 mixins.append(mixin)
         return mixins

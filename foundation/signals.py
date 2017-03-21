@@ -8,7 +8,7 @@ from django.utils import translation
 from django.urls.resolvers import LocaleRegexURLResolver, RegexURLResolver,\
     RegexURLPattern
 from django.core.exceptions import ViewDoesNotExist
-from . import get_backend
+from .backend import get_backend
 
 
 def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_DB_ALIAS, apps=global_apps, **kwargs):

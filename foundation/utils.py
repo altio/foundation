@@ -119,8 +119,9 @@ def unquote(s):
 
 
 def flatten(fields):
-    """Returns a list which is a single level of flattening of the
-    original list."""
+    """
+    Returns a list which is a single level of flattening of the original list.
+    """
     flat = []
     for field in fields:
         if isinstance(field, (list, tuple)):
@@ -131,7 +132,9 @@ def flatten(fields):
 
 
 def flatten_fieldsets(fieldsets):
-    """Returns a list of field names from an admin fieldsets structure."""
+    """
+    Returns a list of field names from a FieldSet object.
+    """
     field_names = []
     for name, opts in fieldsets:
         field_names.extend(
@@ -269,7 +272,13 @@ def _get_non_gfk_field(opts, name):
     return field
 
 
-def lookup_field(name, obj, controller=None):
+def lookup_field(name, obj, view_controller):
+    """
+    Return (f, attr, value) for each named field in the list.
+    f will be the Field instance on the Model class, if present, or None
+    attr will be the callable when f is not a Field.
+    value will be the evaluated attr with respect to the object
+    """
     opts = obj._meta
     try:
         f = _get_non_gfk_field(opts, name)
@@ -279,15 +288,20 @@ def lookup_field(name, obj, controller=None):
         if callable(name):
             attr = name
             value = attr(obj)
-        elif (controller is not None and
-                hasattr(controller, name) and
+        elif (hasattr(view_controller, name) and
                 not name == '__str__' and
                 not name == '__unicode__'):
-            attr = getattr(controller, name)
+            attr = getattr(view_controller, name)
             value = attr(obj)
+        elif (hasattr(view_controller.view, 'inline_formsets') and
+              name in view_controller.view.inline_formsets):
+            value = attr = view_controller.inline_formsets[name]
         else:
             attr = getattr(obj, name)
-            if callable(attr):
+            # accomodate related managers
+            if hasattr(attr, 'all'):
+                value = attr.all()
+            elif callable(attr):
                 value = attr()
             else:
                 value = attr
@@ -295,10 +309,11 @@ def lookup_field(name, obj, controller=None):
     else:
         attr = None
         value = getattr(obj, name)
+
     return f, attr, value
 
 
-def label_for_field(name, model, model_admin=None, return_attr=False):
+def label_for_field(name, model, view_controller=None, return_attr=False):
     """
     Returns a sensible label for a field name. The name can be a callable,
     property (but not created with @property decorator) or the name of an
@@ -324,14 +339,14 @@ def label_for_field(name, model, model_admin=None, return_attr=False):
         else:
             if callable(name):
                 attr = name
-            elif model_admin is not None and hasattr(model_admin, name):
-                attr = getattr(model_admin, name)
+            elif view_controller is not None and hasattr(view_controller, name):
+                attr = getattr(view_controller, name)
             elif hasattr(model, name):
                 attr = getattr(model, name)
             else:
                 message = "Unable to lookup '%s' on %s" % (name, model._meta.object_name)
-                if model_admin:
-                    message += " or %s" % (model_admin.__class__.__name__,)
+                if view_controller:
+                    message += " or %s" % (view_controller.__class__.__name__,)
                 raise AttributeError(message)
 
             if hasattr(attr, "short_description"):

@@ -30,6 +30,12 @@ class Controller(Router, BaseController):
     registrar = None
     force_backend_as_registrar = False
 
+    # move this to filter component
+    filter_horizontal = ()
+    filter_vertical = ()
+
+    public_modes = ()
+
     def __init__(self, parent, registrar=None):
         """
         Initializes a Model Controller for eventual registration as a Backend
@@ -102,7 +108,7 @@ class Controller(Router, BaseController):
             child_urlpatterns = child_controller.get_urlpatterns()
             for name, patterns in child_urlpatterns.items():
                 urlpatterns[name].append(
-                    url(r'^(?P<{lookup}>[-\w]+)/{prefix}/'.format(
+                    url(r'^(?P<{lookup}>[-\w]+)/{prefix}'.format(
                             lookup=self.model_lookup,
                             prefix=child_prefix
                         ),

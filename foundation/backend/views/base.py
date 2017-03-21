@@ -8,8 +8,7 @@ from ...template.response import TemplateResponse
 from ...utils import redirect_to_url
 
 __all__ = 'BackendMixin', 'DispatchMixin', 'AppPermissionsMixin', 'AppMixin', \
-    'View', 'TemplateView', 'AppView', 'AppTemplateView', 'AppIndexView', \
-    'BackendTemplateMixin'
+    'View', 'TemplateView', 'AppView', 'AppTemplateView', 'BackendTemplateMixin'
 
 
 class DispatchMixin(object):
@@ -87,7 +86,7 @@ class AppPermissionsMixin(BackendMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not (getattr(self.app_config, 'is_public', False) or
+        if not (self.app_config.has_public_views or
                 request.user.has_module_perms(self.app_config.label)):
             return redirect_to_url(request, settings.LOGIN_URL)
         return super(AppPermissionsMixin, self).dispatch(
@@ -146,7 +145,3 @@ class AppTemplateMixin(AppMixin):
 
 class AppTemplateView(AppTemplateMixin, TemplateView):
     """ Backend-aware TemplateView """
-
-
-class AppIndexView(AppTemplateView):
-    template_name = 'app_index.html'

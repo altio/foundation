@@ -12,11 +12,13 @@ from django.utils.functional import cached_property
 from .. import utils
 from .registry import NotRegistered
 from .router import Router
+from .views import TemplateView, AppTemplateView
 from django.conf.urls import url, include
 from django.shortcuts import resolve_url
 from django.urls.exceptions import NoReverseMatch
+from foundation.utils import namespace_in_urlpatterns
 
-__all__ = 'Backend',
+__all__ = 'Backend', 'backends', 'get_backend'
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,8 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
     create_permissions = False
     routes = ()
-    site_index_class = None
+    site_index_class = TemplateView
+    template_name = 'index.html'
 
     @property
     def site(self):
@@ -91,6 +94,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             except NotRegistered:
                 continue
 
+            # if any controllers have public modes, app is public
+            if controller.public_modes:
+                app_config.has_public_views = True
+
             controller_namespace = controller.model_namespace
             controller_prefix = controller.url_prefix
 
@@ -104,6 +111,15 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                         include((patterns, controller_namespace))
                     ),
                 )
+
+        # set app_index_class on app to "None" to skip creation
+        app_index_class = getattr(app_config, 'app_index_class', AppTemplateView)
+        if app_index_class:
+            template_name = getattr(app_config, 'template_name', 'app_index.html')
+            app_index = app_index_class.as_view(
+                app_config=app_config, backend=self, template_name=template_name
+            )
+            urlpatterns[None].append(url(r'^$', app_index, name='index'))
 
         return urlpatterns
 
@@ -119,14 +135,30 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
         # URL auto-loader traverses all installed apps
         for app_config in utils.get_project_app_configs():
+
+            # presume app configs are private
+            app_config.has_public_views = False
+
             app_namespace = getattr(app_config,
                                     'url_namespace',
                                     app_config.label)
+
             urlprefix = getattr(app_config, 'url_prefix', app_config.label)
             urlprefix = (r'^{}/'.format(urlprefix)
                          if urlprefix is not None and urlprefix != ''
                          else r'')
             app_urlpatterns = self.get_app_urlpatterns(app_config)
+
+            # attempt to import the module's url patterns
+            append_urls = getattr(app_config, 'append_urls', True)
+            if append_urls:
+                try:
+                    app_urlpatterns[None].append(
+                        url(r'', include(r'{}.urls'.format(app_config.name)))
+                    )
+                except ImportError:
+                    pass
+
             for name, patterns in app_urlpatterns.items():
                 urlpatterns[name].append(
                     url(urlprefix, include(
@@ -137,7 +169,10 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         if self.site_index_class:
             urlpatterns[None].append(
                 url(r'^$',
-                    self.site_index_class.as_view(backend=self),
+                    self.site_index_class.as_view(
+                        backend=self,
+                        template_name=self.template_name
+                    ),
                     name='home')
             )
 
@@ -170,13 +205,17 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         for app_config in sorted(utils.get_project_app_configs(),
                                  key=lambda app_config: app_config.label):
             is_visible = False
-            if getattr(app_config, 'is_public', False):
+            if app_config.has_public_views:
                 is_visible = True
             elif user.has_module_perms(app_config.label):
                 is_visible = True
             if is_visible:
                 try:
-                    is_visible = resolve_url(app_config.label + ':index')
+                    is_visible = (
+                        resolve_url('/' + app_config.url_prefix)
+                        if app_config.url_prefix
+                        else False
+                    )
                 except NoReverseMatch:
                     is_visible = False
             available_apps[app_config] = is_visible
@@ -193,3 +232,18 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             'site_title': self.site_title,
             'available_apps': self.get_available_apps(request),
         }
+
+
+"""
+Plan is to eventually actually allow for the declaration of per-Site Backends
+and get them from a SiteBackend registry.  For now, using a singleton list.
+"""
+
+backends = []
+
+
+def get_backend(site=None):
+    global backends
+    if not backends:
+        backends.append(Backend())
+    return backends[0]

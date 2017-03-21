@@ -13,12 +13,10 @@ def create_fixtures(apps, **kwargs):
 
 class BlogsConfig(AppConfig):
 
-    # this flag determines whether to expose the public views
-    is_public = True
-
     name = 'blogs'
     url_namespace = 'blogs'
     url_prefix = 'blogs'
+    app_index_class = None  # we are going to park blogs on root
 
     def ready(self):
         super(BlogsConfig, self).ready()

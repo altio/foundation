@@ -21,7 +21,8 @@
       {% endif %}
     {% endblock %}
     {% endcomment %}
-      {% include formset.view.list_templates.tabular %}
+    <h3>{{ formset.view_controller.get_title|title }}</h3>
+      {% include view.view_template %}
     {% block pagination %}{% endblock pagination %}
     </form>
   </div>

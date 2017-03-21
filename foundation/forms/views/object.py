@@ -2,16 +2,17 @@
 from __future__ import unicode_literals
 
 from django.db import router
+from django.forms.models import _get_foreign_key
 from django.utils.encoding import force_text
-from django.utils.translation import ugettext as _
 from django.views.generic import edit
 
 from ... import forms
-from ...utils import get_deleted_objects
+from ...utils import flatten_fieldsets, get_deleted_objects
 
 from ...backend import views
 from .base import FormControllerViewMixin
 from .components import BaseModelFormMixin
+from django.core.exceptions import FieldError
 
 
 __all__ = 'AddView', 'EditView', 'DisplayView', 'DeleteView'
@@ -57,10 +58,27 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         self.form = self.get_form()
         return handler
 
+    def get_inline_formsets(self, obj):
+        """
+        Return the InlineFormSet for this View via the ViewChild.
+        TODO: Better handle the case where of no child controller (e.g. a check)
+        """
+        obj = None if self.add else self.object
+        # fields = flatten_fieldsets(self.get_fieldsets(self.mode))
+        inline_formsets = {}
+        for name, view_child in self.view_children.items():
+            inline_fk_field = _get_foreign_key(
+                self.model, view_child.model, view_child.fk_name)
+            # if inline_fk_field.remote_field.name not in fields:
+            #     continue  # TODO: Fail Check
+            formset_class = view_child.get_formset_class(obj)
+            formset_kwargs = view_child.get_formset_kwargs(
+                formset_class=formset_class, obj=obj)
+            inline_formsets[name] = formset_class(**formset_kwargs)
+        return inline_formsets
+
     def get(self, request, *args, **kwargs):
-        self.inline_formsets = self.get_inline_formsets(
-            self.object, change=not self.add
-        )
+        self.inline_formsets = self.get_inline_formsets(self.object)
         return super(ProcessFormView, self).get(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -71,11 +89,10 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
             form_validated = False
             new_object = self.form.instance
         new_object._controller = self
-        self.inline_formsets = self.get_inline_formsets(
-            new_object, change=not self.add
-        )
-        # val all formsets *first* to ensure we report them when invalid
-        if forms.all_valid(self.inline_formsets) and form_validated:
+        self.inline_formsets = self.get_inline_formsets(new_object)
+
+        # val all formsets *first* to ensure we report them when form invalid
+        if forms.all_valid(self.inline_formsets.values()) and form_validated:
             self.object = new_object
             self.save_model(not self.add)
             self.save_related(not self.add)
@@ -86,15 +103,13 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
     def get_media(self):
         media = super(ProcessFormView, self).get_media()
         media += self.form.media
-        for inline_formset in self.inline_formsets:
+        for inline_formset in self.inline_formsets.values():
             media += inline_formset.media
         return media
 
     def get_context_data(self, **kwargs):
         # from render_change_form
         request = self.request
-        opts = self.model._meta
-        app_label = opts.app_label
 
         # from changeform_view
         object_id = None
@@ -103,16 +118,8 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
         add = object_id is None
 
         kwargs.update({
-            'mode': self.mode,
-            'has_add_permission': self.has_permission('add'),
-            'has_change_permission': self.has_permission('edit', obj=self.object),
-            'has_delete_permission': self.has_permission('delete', obj=self.object),
-            'opts': opts,
-            'app_label': app_label,
-            'title': _(self.mode_title),
             'form': self.form,
             'object_id': object_id,
-            'inline_formsets': self.inline_formsets,
         })
 
         return super(ProcessFormView, self).get_context_data(**kwargs)
@@ -137,3 +144,4 @@ class DisplayView(ProcessFormView):
     mode = 'display'
     mode_title = ''
     template_name = 'display.html'
+

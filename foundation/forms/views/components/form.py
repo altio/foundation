@@ -7,23 +7,17 @@ from collections import OrderedDict
 
 from django.db import models
 from django.core.exceptions import FieldError
-from django.core.urlresolvers import reverse
 from django.forms.widgets import CheckboxSelectMultiple, SelectMultiple
 from django.utils.translation import string_concat, ugettext as _
 
 from .... import forms
-from ....utils import flatten_fieldsets, get_content_type_for_model
+from ....utils import flatten_fieldsets
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
-           'VERTICAL', 'PUBLIC_MODES', 'PRIVATE_MODES',
-           'FORMFIELD_FOR_DBFIELD_DEFAULTS')
+           'VERTICAL', 'FORMFIELD_FOR_DBFIELD_DEFAULTS')
 
 
 HORIZONTAL, VERTICAL = 1, 2
-
-PUBLIC_MODES = ('list', 'view', 'display')
-PRIVATE_MODES = ('add', 'edit')
-
 
 FORMFIELD_FOR_DBFIELD_DEFAULTS = {
 }
@@ -71,12 +65,13 @@ class BaseModelFormMixin(object):
         # fields can be a mode:whitelist dictionary
         if isinstance(self.fields, dict):
             fields = self.fields.get(mode)
-            if fields is None and mode in PRIVATE_MODES:
-                fields = self.fields.get('private', self.fields.get('public'))
-            elif fields is None and mode in PUBLIC_MODES:
-                fields = self.fields.get('public')
+            if fields is None:
+                if mode not in self.public_modes:
+                    fields = self.fields.get('private')
+                if fields is None:
+                    fields = self.fields.get('public')
         else:
-            fields = self.fields
+            fields = self.controller.fields
 
         return fields
 
@@ -88,10 +83,11 @@ class BaseModelFormMixin(object):
         # fieldsets can be a mode:fieldsets dictionary
         if isinstance(self.fieldsets, dict):
             fieldsets = self.fieldsets.get(mode)
-            if fieldsets is None and mode in PRIVATE_MODES:
-                fieldsets = self.fieldsets.get('private', self.fieldsets.get('public'))
-            elif fieldsets is None and mode in PUBLIC_MODES:
-                fieldsets = self.fieldsets.get('public')
+            if fieldsets is None:
+                if mode not in self.public_modes:
+                    fieldsets = self.fieldsets.get('private')
+                if fieldsets is None:
+                    fieldsets = self.fieldsets.get('public')
         else:
             fieldsets = self.fieldsets
 
@@ -118,11 +114,26 @@ class BaseModelFormMixin(object):
                   if 'fields' in kwargs
                   else flatten_fieldsets(self.get_fieldsets(self.view.mode, obj)))
 
+        # it is important to note that there are two "readonly_fields" concepts:
+        # 1. the readonly_fields on the controller itself, which persist down to
+        #    the view, and;
+        # 2. the extra readonly_fields accumulated here and then excluded from
+        #    form construction
+        exclude = [] if self.exclude is None else list(self.exclude)
+        readonly_fields = list(self.get_readonly_fields(obj))
+
         # had to put '__all__' in a list for it to pass through flatten...
         if len(fields) == 1 and fields[0] in (None, forms.ALL_FIELDS):
             fields = fields[0]
-        exclude = [] if self.exclude is None else list(self.exclude)
-        readonly_fields = self.get_readonly_fields(obj)
+        # otherwise prune attributes, callables, and related object accessors
+        else:
+            model_fields = tuple(f.name for f in self.model._meta.get_fields())
+            # work backwards through field list, pruning readonly fields
+            for i in reversed(range(len(fields))):
+                if fields[i] not in model_fields:
+                    if fields[i] not in readonly_fields:
+                        readonly_fields.append(fields[i])
+                    del fields[i]
         exclude.extend(readonly_fields)
 
         # formset_form exists in both model types
@@ -175,9 +186,11 @@ class BaseModelFormMixin(object):
 
     def get_form_kwargs(self):
         kwargs = super(BaseModelFormMixin, self).get_form_kwargs()
+        obj = kwargs.get('instance')
         kwargs['fieldsets'] = self.get_fieldsets(self.mode)
-        kwargs['prepopulated_fields'] = {}  # TODO: do this thing
-        kwargs['view'] = self
+        kwargs['prepopulated_fields'] = self.get_prepopulated_fields(self.mode, obj=obj)
+        kwargs['readonly_fields'] = self.get_readonly_fields(self.mode, obj=obj)
+        kwargs['view_controller'] = self
         return kwargs
 
     def save_form(self, change):
@@ -214,7 +227,7 @@ class BaseModelFormMixin(object):
         already been called.
         """
         self.form.save_m2m()
-        for inline_formset in self.inline_formsets:
+        for inline_formset in self.inline_formsets.values():
             self.save_formset(inline_formset, change=change)
 
     def formfield_for_dbfield(self, db_field, **kwargs):

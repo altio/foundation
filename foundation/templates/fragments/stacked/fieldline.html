@@ -3,14 +3,17 @@
 <div class="{% block fieldlineclass %}{% endblock %}">
 {% block beforefieldline %}{% endblock %}
 {% for field in fieldline %}
+  {% if not field.is_readonly or not view.edit %}
   {% block beforefield %}{% endblock %}
+  {{ field.label_tag }}
   {% include 'fragments/field.html' %}
   {% block afterfield %}
-  {% if form.view.edit %}{{ field.errors.as_ul }}{% endif %}
+  {% if form.view_controller.view.edit %}{{ field.errors.as_ul }}{% endif %}
   {% if field.help_text %}
     <p class="help">{{ field.help_text|safe }}</p>
   {% endif %}
   {% endblock %}
+  {% endif %}
 {% endfor %}
 {% block afterfieldline %}{% endblock %}
 </div>

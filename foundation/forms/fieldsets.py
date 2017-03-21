@@ -2,13 +2,14 @@
 # CONCEPT: django.contrib.admin.helpers 1.10
 from __future__ import unicode_literals
 
+import os
 from django import forms
 from django.utils import six
 from django.utils.safestring import mark_safe
 
 
 class Fieldline(object):
-    def __init__(self, form, fieldline, readonly_fields=None, view=None):
+    def __init__(self, form, fieldline, readonly_fields=None, view_controller=None):
         self.form = form
         self.fields = [fieldline] if not hasattr(fieldline, "__iter__") or isinstance(
             fieldline, six.text_type
@@ -18,7 +19,7 @@ class Fieldline(object):
             self.form.fields[field].widget.is_hidden
             for field in self.fields
         )
-        self.view = view
+        self.view_controller = view_controller
         if readonly_fields is None:
             readonly_fields = ()
         self.readonly_fields = readonly_fields
@@ -42,24 +43,33 @@ class Fieldline(object):
 
 class Fieldset(object):
     def __init__(self, form, name=None, readonly_fields=(), fields=(),
-                 classes=(), description=None, view=None):
+                 classes=(), description=None, view_controller=None,
+                 template_name=None):
         self.form = form
         self.name = name
         self.fields = fields
         self.classes = ' '.join(classes)
         self.description = description
-        self.view = view
+        self.view_controller = view_controller
         self.readonly_fields = readonly_fields
+        self.template_name = template_name
 
     @property
     def media(self):
         return forms.Media()
 
+    @property
+    def template(self):
+        return os.path.join(
+            self.view_controller.template_paths[self.view_controller.object_style],
+            self.template_name
+        ) if self.template_name else None
+
     def __iter__(self):
         for fieldline in self.fields:
             yield Fieldline(form=self.form, fieldline=fieldline,
                             readonly_fields=self.readonly_fields,
-                            view=self.view)
+                            view_controller=self.view_controller)
 
 
 class InlineFieldset(Fieldset):
@@ -74,4 +84,4 @@ class InlineFieldset(Fieldset):
                 continue
             yield Fieldline(form=self.form, field=field,
                             readonly_fields=self.readonly_fields,
-                            view=self.view)
+                            view_controller=self.view_controller)

@@ -17,19 +17,6 @@ Fieldline
 - conditionally returned a ROF or AdminField (wrapped BF) based on whether in ROF list -- reinstate behavior
 - flagged whether field is first for when that is important
 
-BoundField represents a form Field which is bound to a Form instance, regardless of whether data exists.
-- First-aware
-- Readonly-aware
-- Controller-aware
-- Is Checkbox aware
-- Override label_tag, add contents
-
-Form Fields overrides get_bound_field to allow for view-specific BF configuration, which in turn provides per-field formfield and widget callbacks.
-
-Fieldline represents one or more fields on a line and how to render each case.
-
-Fieldset represents one or more fieldlines in a set and how to render each.
-
 Inline fieldset skips iteration of the FK for an inline formset.
 - TODO: Conditionally do NOT skip this when a) acting as SU and b) a root controller (allows to choose attribution).
 
@@ -40,12 +27,6 @@ Inline fieldset skips iteration of the FK for an inline formset.
   can be edited and AJAX calls can be made.
 
 Re-implement addition widgets with popup behavior
-
-Template loader implemented to look in app directories for anything in following paths:
-
-/app_label/model_name/ ONLY in current app_label templates dir for model overrides
-/app_label/ ONLY in current app_label templates dir for app overrides
-/ in all app template dirs for global overrides
 
 
 TODO memoize view (and form) class composition?

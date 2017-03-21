@@ -11,7 +11,8 @@ __all__ = 'FormViewSet',
 
 class FormViewSet(ControllerViewSet):
 
-    view_child_class = views.base.ViewChild
+    view_child_class = views.base.FormChild
+    view_parent_class = views.base.FormParent
 
     named_view_classes = (
         ('list', views.ListView),
