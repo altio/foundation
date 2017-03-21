@@ -42,6 +42,11 @@ class FormChild(TitleMixin, FormSetMixin, views.ViewChild):
             'list.html'
         )
 
+    def get_formset_kwargs(self, formset_class, obj=None, queryset=None, **kwargs):
+        if self.view.add and not queryset:
+            queryset = self.get_associated_queryset().none()
+        return super(FormChild, self).get_formset_kwargs(formset_class, obj=obj, queryset=queryset, **kwargs)
+
 
 class BreadcrumbMixin(TitleMixin):
 

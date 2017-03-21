@@ -98,7 +98,7 @@ class FormSetMixin(BaseModelFormMixin):
         formset_params = {
             'prefix': formset_class.get_default_prefix(),
             # views normally groom the QS and pass it in but not inlines
-            'queryset': queryset or self.get_queryset(),
+            'queryset': queryset if queryset is not None else self.get_queryset(),
             'view_controller': self,
             # 'is_readonly': not self.view.edit,
             'fieldsets': list(self.get_fieldsets(mode=self.view.mode)),
