@@ -1,0 +1,28 @@
+{# expects have form and fieldset (iterating over form) in context #}
+
+{% if view.edit %}
+  {% include 'fragments/stacked/fieldset.html' %}
+{% elif fieldset.fields %}
+  <div class="row">
+    <div class="col-sm-12">
+      <ul class="nav nav-tabs" role="tablist">
+        {% for fieldline in fieldset %}
+          {% for field in fieldline %}
+          <li role="presentation" class="{% if view.request.GET.focus %}{% if field.name == view.request.GET.focus %}active{% endif %}{% elif forloop.parentloop.first %}active{% endif %}">
+            <a href="#{{ field.name }}" aria-controls="{{ field.name }}" role="tab" data-toggle="tab">{{ field.label|title }}</a>
+          </li>
+        {% endfor %}
+        {% endfor %}
+      </ul>
+      <div class="tab-content">
+        {% for fieldline in fieldset %}
+          {% for field in fieldline %}
+            <div role="tabpanel" class="tab-pane{% if view.request.GET.focus %}{% if field.name == view.request.GET.focus %} active{% endif %}{% elif forloop.parentloop.first %} active{% endif %}" id="{{ field.name }}">
+              {% include 'fragments/field.html' %}
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>{# col #}
+  </div>{# row #}
+{% endif %}

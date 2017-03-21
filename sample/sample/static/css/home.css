@@ -67,3 +67,12 @@ table.table {
 div>i.fa {
   font-size: 30px;
 }
+
+.tab-content {
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-top-width: 0px;
+  border-radius: 0px 0px 6px 6px;
+  -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}

@@ -2,6 +2,7 @@
 # CONCEPT: django.contrib.admin.helpers 1.10
 from __future__ import unicode_literals
 
+import os
 from django import forms
 from django.utils import six
 from django.utils.safestring import mark_safe
@@ -42,7 +43,8 @@ class Fieldline(object):
 
 class Fieldset(object):
     def __init__(self, form, name=None, readonly_fields=(), fields=(),
-                 classes=(), description=None, view_controller=None):
+                 classes=(), description=None, view_controller=None,
+                 template_name=None):
         self.form = form
         self.name = name
         self.fields = fields
@@ -50,10 +52,18 @@ class Fieldset(object):
         self.description = description
         self.view_controller = view_controller
         self.readonly_fields = readonly_fields
+        self.template_name = template_name
 
     @property
     def media(self):
         return forms.Media()
+
+    @property
+    def template(self):
+        return os.path.join(
+            self.view_controller.template_paths[self.view_controller.object_style],
+            self.template_name
+        ) if self.template_name else None
 
     def __iter__(self):
         for fieldline in self.fields:
