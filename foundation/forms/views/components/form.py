@@ -10,8 +10,9 @@ from django.core.exceptions import FieldError
 from django.forms.widgets import CheckboxSelectMultiple, SelectMultiple
 from django.utils.translation import string_concat, ugettext as _
 
-from .... import forms
+from django import forms
 from ....utils import flatten_fieldsets
+from ...widgets import RelatedFieldWidgetWrapper
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
            'VERTICAL', 'FORMFIELD_FOR_DBFIELD_DEFAULTS')
@@ -271,7 +272,7 @@ class BaseModelFormMixin(object):
                 #         can_change_related=related_controller.has_permission('change'),
                 #         can_delete_related=related_controller.has_permission('delete'),
                 #     )
-                formfield.widget = forms.RelatedFieldWidgetWrapper(
+                formfield.widget = RelatedFieldWidgetWrapper(
                     formfield.widget, db_field.remote_field, related_controller, **wrapper_kwargs
                 )
 

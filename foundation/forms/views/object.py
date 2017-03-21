@@ -6,7 +6,7 @@ from django.forms.models import _get_foreign_key
 from django.utils.encoding import force_text
 from django.views.generic import edit
 
-from ... import forms
+from django import forms
 from ...utils import flatten_fieldsets, get_deleted_objects
 
 from ...backend import views
