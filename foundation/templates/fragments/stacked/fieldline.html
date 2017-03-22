@@ -4,8 +4,7 @@
 {% block beforefieldline %}{% endblock %}
 {% for field in fieldline %}
   {% if not field.is_readonly or not view.edit %}
-  {% block beforefield %}{% endblock %}
-  {{ field.label_tag }}
+  {% block beforefield %}{{ field.label_tag }}{% endblock %}
   {% include 'fragments/field.html' %}
   {% block afterfield %}
   {% if form.view_controller.view.edit %}{{ field.errors.as_ul }}{% endif %}

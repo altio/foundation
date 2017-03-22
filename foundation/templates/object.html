@@ -1,5 +1,21 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block content %}
-  {% include view.view_template %}
+  <!-- <form action="{{ app_path }}" method="post">  -->
+  <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ view.model_name }}_form" novalidate class="{% block formclasses %}{% endblock %}">
+    {% csrf_token %}
+    {% block form-top %}{% endblock %}
+
+    {% include view.view_template %}
+
+    {% block form-bottom %}
+      {% if view.edit %}
+      <p>
+        <button type="submit">{% trans 'Save ' %}{{ view.verbose_name|title }}</button>
+        &nbsp;<a href="javascript:history.back()">{% trans 'Cancel' %}</a>
+      </p>
+      {% endif %}
+    {% endblock %}
+  </form>
 {% endblock content %}

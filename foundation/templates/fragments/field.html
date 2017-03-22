@@ -5,7 +5,7 @@
   {% if field.field.widget.display_template %}
     {% include field.field.widget.display_template %}
   {% elif field.attr.view_controller %}{# inline formset #}
-    {% include field.attr.view_controller.inline_template with formset=field.value %}
+    {% include field.attr.view_controller.inline_template with formset=field.value app_label=field.attr.view_controller.app_label model_name=field.attr.view_controller.model_name %}
   {% else %}
     {{ field.contents|default:'unknown' }}
   {% endif %}

@@ -29,15 +29,15 @@
   {% endfor %}
   {% endblock %}
 
+  <td class="{% block column-actions-classes %}text-right{% endblock %}">
   {% block column-actions %}
-  <td class="text-right">
     {% ifpermission 'edit' formset_form %}
       <a href="{% mode_url 'edit' formset_form %}">Edit</a>&nbsp;
     {% endifpermission %}
     {% ifpermission 'delete' formset_form %}
       <a href="{% mode_url 'delete' formset_form %}">Delete</a>
     {% endifpermission %}
-  </td>
   {% endblock %}
+  </td>
 
 </tr>
