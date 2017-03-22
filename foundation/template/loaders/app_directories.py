@@ -86,6 +86,7 @@ class Loader(app_directories.Loader):
         args = [template_name, template_dirs, app_label, model_name]
 
         for origin in self.get_template_sources(*args):
+
             if skip is not None and origin in skip:
                 tried.append((origin, 'Skipped'))
                 continue

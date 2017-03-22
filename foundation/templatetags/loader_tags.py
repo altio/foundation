@@ -41,7 +41,7 @@ class ExtendsNode(loader_tags.ExtendsNode):
                 return template
 
         history = context.render_context.setdefault(
-            self.context_key, [context.template.origin],
+            self.context_key, [self.origin],
         )
         template, origin = context.template.engine.find_template(
             template_name, skip=history, app_label=app_label,
