@@ -16,6 +16,7 @@ __all__ = ('BoundField', 'ProxyField')
 
 class BoundField(boundfield.BoundField):
     """ Based on django.contrib.admin.helpers 1.10 """
+    is_proxy = False
     is_readonly = False
     view_controller = None
 
@@ -46,6 +47,7 @@ class BoundField(boundfield.BoundField):
 
 
 class ProxyField(object):
+    is_proxy = True
 
     def __init__(self, form, field, is_readonly):
         self.form = form

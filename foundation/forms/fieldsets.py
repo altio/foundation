@@ -36,7 +36,7 @@ class Fieldline(object):
             '\n'.join(
                 self.form[f].errors.as_ul()
                 for f in self.fields
-                if f not in self.readonly_fields
+                if f not in self.readonly_fields and not self.form[f].is_proxy
             ).strip('\n')
         )
 

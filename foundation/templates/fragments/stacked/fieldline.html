@@ -7,7 +7,7 @@
   {% block beforefield %}{{ field.label_tag }}{% endblock %}
   {% include 'fragments/field.html' %}
   {% block afterfield %}
-  {% if form.view_controller.view.edit %}{{ field.errors.as_ul }}{% endif %}
+  {% if form.view_controller.view.edit and field.errors %}{{ field.errors.as_ul }}{% endif %}
   {% if field.help_text %}
     <p class="help">{{ field.help_text|safe }}</p>
   {% endif %}
