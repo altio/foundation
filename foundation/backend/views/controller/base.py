@@ -7,7 +7,6 @@ from ...controller.base import BaseController
 from ...controller import MultipleObjectMixin, SingleObjectMixin
 from .accessor import ModelPermissionsMixin
 from .resolver import ChainingMixin
-from django.forms.models import _get_foreign_key
 
 __all__ = 'ViewParent', 'ViewChild', 'ControllerViewMixin'
 
@@ -131,11 +130,11 @@ class ControllerViewMixin(BaseViewController):
                 else self.backend.get_registered_controller(registered_model)
             )
             child = registered_child.get_view_child(self)
-            name = _get_foreign_key(self.model, child.model).rel.get_accessor_name()
+            name = child.fk.rel.get_accessor_name()
             named_children[name] = child
         for inline_controller_class in self.controller.inlines:
             child = inline_controller_class(self)
-            name = _get_foreign_key(self.model, child.model).rel.get_accessor_name()
+            name = child.fk.rel.get_accessor_name()
             named_children[name] = child
         return named_children
 
