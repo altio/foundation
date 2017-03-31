@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django import forms
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import six
+from django.utils.safestring import mark_safe
 
 from .accessor import ModelAccessor
 from .resolver import ModelResolver
@@ -61,3 +62,10 @@ class BaseController(ModelAccessor, ModelResolver):
                 return getattr(model._meta, name)
             except AttributeError:
                 raise e
+
+    def get_empty_value_display(self):
+        """
+        Return the empty_value_display set on Controller or Backend.
+        """
+        return mark_safe(getattr(self, 'empty_value_display',
+                                 self.backend.empty_value_display))

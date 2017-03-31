@@ -29,6 +29,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
     routes = ()
     site_index_class = TemplateView
     template_name = 'index.html'
+    _empty_value_display = '-'
 
     @property
     def site(self):
@@ -213,7 +214,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 try:
                     is_visible = (
                         resolve_url('/' + app_config.url_prefix)
-                        if app_config.url_prefix
+                        if getattr(app_config, 'url_prefix', None)
                         else False
                     )
                 except NoReverseMatch:
@@ -232,6 +233,14 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             'site_title': self.site_title,
             'available_apps': self.get_available_apps(request),
         }
+
+    @property
+    def empty_value_display(self):
+        return self._empty_value_display
+
+    @empty_value_display.setter
+    def empty_value_display(self, empty_value_display):
+        self._empty_value_display = empty_value_display
 
 
 """
