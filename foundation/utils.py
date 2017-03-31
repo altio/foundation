@@ -20,6 +20,7 @@ from django.utils.six.moves.urllib.parse import urlparse, urlunparse
 from django.utils.text import capfirst
 from django.urls.base import reverse
 from django.urls.exceptions import NoReverseMatch
+from django.db.models.fields.reverse_related import OneToOneRel
 
 
 def redirect_to_url(request, url, redirect_field_name=REDIRECT_FIELD_NAME):
@@ -307,8 +308,12 @@ def lookup_field(name, obj, view_controller):
                 value = attr
         f = None
     else:
-        attr = None
-        value = getattr(obj, name)
+        if isinstance(f, OneToOneRel):
+            f = None
+            value = attr = view_controller.inline_formsets[name]
+        else:
+            attr = None
+            value = getattr(obj, name)
 
     return f, attr, value
 

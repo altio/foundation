@@ -128,7 +128,14 @@ class BaseModelFormMixin(object):
             fields = fields[0]
         # otherwise prune attributes, callables, and related object accessors
         else:
-            model_fields = tuple(f.name for f in self.model._meta.get_fields())
+            model_fields = tuple(
+                field.name for field in self.model._meta.get_fields()
+                if not (field.is_relation and (
+                    (field.many_to_one and not field.related_model)
+                    or field.one_to_many or field.one_to_one
+                ))
+            )
+
             # work backwards through field list, pruning readonly fields
             for i in reversed(range(len(fields))):
                 if fields[i] not in model_fields:
