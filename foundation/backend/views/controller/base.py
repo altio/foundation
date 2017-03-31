@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.conf import settings
 from django.utils.functional import cached_property
+from django.shortcuts import resolve_url
 
 from ...controller.base import BaseController
 from ...controller import MultipleObjectMixin, SingleObjectMixin
 from .accessor import ModelPermissionsMixin
 from .resolver import ChainingMixin
+from django.http.response import HttpResponseRedirect
 
 __all__ = 'ViewParent', 'ViewChild', 'ControllerViewMixin'
 
@@ -113,6 +116,26 @@ class ControllerViewMixin(BaseViewController):
         kwargs.setdefault('view', self)
         super(ControllerViewMixin, self).__init__(controller=controller,
                                                   **kwargs)
+
+    def redirect(self, request, to=settings.LOGIN_URL, *args, **kwargs):
+        to = resolve_url(to)
+        next = request.get_full_path()
+        if next:
+            to += '?next={}'.format(next)
+        return HttpResponseRedirect(to)
+
+    def handle_common(self, handler, request, *args, **kwargs):
+        """
+        Ensure the view has permission to render, otherwise redirect to login.
+        """
+
+        handler = super(ControllerViewMixin, self).handle_common(
+            handler, request, *args, **kwargs)
+
+        if not self.has_permission(self.mode):
+            handler = self.redirect
+
+        return handler
 
     @cached_property
     def view_children(self):
