@@ -203,7 +203,7 @@ class BaseModelFormSet(BackendFormSetMixin, models.BaseModelFormSet):
     def has_related_field_in_list_display(self):
         for field_name in self.list_display:
             try:
-                field = self.opts.get_field(field_name)
+                field = self.view_controller.get_field(field_name)
             except FieldDoesNotExist:
                 pass
             else:
@@ -213,10 +213,10 @@ class BaseModelFormSet(BackendFormSetMixin, models.BaseModelFormSet):
 
     def url_for_result(self, result):
         pk = getattr(result, self.pk_attname)
-        return reverse('admin:%s_%s_change' % (self.opts.app_label,
-                                               self.opts.model_name),
+        return reverse('admin:%s_%s_change' % (self.view_controller.app_label,
+                                               self.view_controller.model_name),
                        args=(quote(pk),),
-                       current_app=self.opts.site.name)
+                       current_app=self.view_controller.site.name)
 
 
 class BaseInlineFormSet(BackendFormSetMixin, models.BaseInlineFormSet):
@@ -233,7 +233,7 @@ class BaseInlineFormSet(BackendFormSetMixin, models.BaseInlineFormSet):
             yield field
 
     def inline_formset_data(self):
-        verbose_name = self.opts.verbose_name
+        verbose_name = self.view_controller.verbose_name
         return json.dumps({
             'name': '#%s' % self.prefix,
             'options': {
