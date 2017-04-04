@@ -37,7 +37,7 @@ class BackendViewSet(OrderedDict):
         return mixins
 
     def _get_view_as_callable(self, view_class, mode, **kwargs):
-        return view_class.as_view(backend=self.router.backend, mode=mode, **kwargs)
+        return view_class.as_view(backend=self.router.backend, name=mode, **kwargs)
 
     def get_urlpatterns(self):
         urlpatterns = []
