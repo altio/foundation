@@ -18,7 +18,7 @@
 
 {% block fieldsets %}
   {% for fieldset in form.fieldsets.values %}
-    {% include fieldset.template|default:"fragments/stacked/fieldset.html" %}
+    {% include fieldset.template %}
   {% endfor %}
 {% endblock %}
 

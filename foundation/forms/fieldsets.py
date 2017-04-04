@@ -63,7 +63,7 @@ class Fieldset(object):
         return os.path.join(
             self.view_controller.template_paths[self.view_controller.object_style],
             self.template_name
-        ) if self.template_name else None
+        ) if self.template_name else 'fragments/stacked/fieldset.html'
 
     def __iter__(self):
         for fieldline in self.fields:
