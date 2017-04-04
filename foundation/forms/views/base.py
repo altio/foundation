@@ -118,6 +118,10 @@ class FormControllerViewMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
         return breadcrumbs
 
     @property
+    def template_name(self):
+        return '{}.html'.format(self.name)
+
+    @property
     def view_template(self):
         return os.path.join(
             self.template_paths[self.list_style

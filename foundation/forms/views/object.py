@@ -7,12 +7,11 @@ from django.utils.encoding import force_text
 from django.views.generic import edit
 
 from django import forms
-from ...utils import flatten_fieldsets, get_deleted_objects
+from ...utils import get_deleted_objects
 
 from ...backend import views
 from .base import FormControllerViewMixin
 from .components import BaseModelFormMixin
-from django.core.exceptions import FieldError
 
 
 __all__ = 'AddView', 'EditView', 'DisplayView', 'DeleteView'
@@ -129,19 +128,15 @@ class AddView(ProcessFormView):
 
     mode = 'add'
     mode_title = 'add a'
-    template_name = 'add.html'
 
 
 class EditView(ProcessFormView):
 
     mode = 'edit'
     mode_title = 'Editing'
-    template_name = 'edit.html'
 
 
 class DisplayView(ProcessFormView):
 
     mode = 'display'
     mode_title = ''
-    template_name = 'display.html'
-

@@ -73,7 +73,7 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
                         content_type = ContentType.objects.get_for_model(view_model)
                         if content_type not in ctypes:
                             continue
-                        view_mode = view_class.mode or view_initkwargs['mode']
+                        view_mode = view_class.name or view_initkwargs['name']
                         verbose_name_plural = view_model._meta.verbose_name_plural
                     else:
                         # we cannot add perms on models not in the calling model's app

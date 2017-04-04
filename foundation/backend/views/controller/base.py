@@ -138,7 +138,7 @@ class ControllerViewMixin(BaseViewController):
         self.edit = self.mode in ('add', 'edit')
         self.params = dict(request.GET.items())
 
-        if not self.has_permission(self.mode):
+        if not self.has_permission(self.name):
             return self.redirect
 
         return super(ControllerViewMixin, self).handle_common(

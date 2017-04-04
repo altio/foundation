@@ -13,7 +13,6 @@ __all__ = 'ListView',
 class ListView(FormSetMixin, FormControllerViewMixin, ListMixin, list.ListView):
     """ Multiple-Object ModelFormSet View Mixin """
 
-    template_name = 'list.html'
     mode_title = 'all'
 
     def handle_common(self, handler, request, *args, **kwargs):
