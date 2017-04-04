@@ -61,45 +61,6 @@ class BackendMixin(DispatchMixin):
     """
 
     backend = None
-    mode = None
-
-    def handle_common(self, handler, request, *args, **kwargs):
-        """
-        Once a handler has been resolved and the the method is confirmed to be
-        allowed, perform common work and do any validation needed.
-        Return the handler passed or an alternate, as appropriate.
-        """
-
-        # helpers used throughout
-        self.add = self.mode == 'add' or '_saveasnew' in request.POST
-        self.edit = self.mode in ('add', 'edit')
-        self.params = dict(request.GET.items())
-
-        return super(BackendMixin, self).handle_common(
-            handler, request, *args, **kwargs)
-
-
-class AppPermissionsMixin(BackendMixin):
-    """
-    Redirect to login if logged in (or anonymous) user lacks access to app and
-    it is not public.
-    """
-
-    def dispatch(self, request, *args, **kwargs):
-        if not (self.app_config.has_public_views or
-                request.user.has_module_perms(self.app_config.label)):
-            return redirect_to_url(request, settings.LOGIN_URL)
-        return super(AppPermissionsMixin, self).dispatch(
-            request, *args, **kwargs
-        )
-
-
-class AppMixin(AppPermissionsMixin):
-    app_config = None
-
-    def __init__(self, app_config, **kwargs):
-        self.app_config = app_config
-        super(AppMixin, self).__init__(**kwargs)
 
 
 class View(BackendMixin, base.View):
@@ -124,6 +85,29 @@ class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
 
 class TemplateView(BackendTemplateMixin, base.TemplateView):
     """ Backend-aware TemplateView """
+
+
+class AppPermissionsMixin(BackendMixin):
+    """
+    Redirect to login if logged in (or anonymous) user lacks access to app and
+    it is not public.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (self.app_config.has_public_views or
+                request.user.has_module_perms(self.app_config.label)):
+            return redirect_to_url(request, settings.LOGIN_URL)
+        return super(AppPermissionsMixin, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class AppMixin(AppPermissionsMixin):
+    app_config = None
+
+    def __init__(self, app_config, **kwargs):
+        self.app_config = app_config
+        super(AppMixin, self).__init__(**kwargs)
 
 
 class AppView(AppMixin, View):

@@ -112,6 +112,9 @@ class ViewParent(MultipleObjectMixin, SingleObjectMixin, BaseViewController):
 
 class ControllerViewMixin(BaseViewController):
 
+    mode = None
+    mode_title = ''
+
     def __init__(self, controller, **kwargs):
         kwargs.setdefault('view', self)
         super(ControllerViewMixin, self).__init__(controller=controller,
@@ -129,13 +132,16 @@ class ControllerViewMixin(BaseViewController):
         Ensure the view has permission to render, otherwise redirect to login.
         """
 
-        handler = super(ControllerViewMixin, self).handle_common(
-            handler, request, *args, **kwargs)
+        # helpers used throughout
+        self.add = self.mode == 'add' or '_saveasnew' in request.POST
+        self.edit = self.mode in ('add', 'edit')
+        self.params = dict(request.GET.items())
 
         if not self.has_permission(self.mode):
-            handler = self.redirect
+            return self.redirect
 
-        return handler
+        return super(ControllerViewMixin, self).handle_common(
+            handler, request, *args, **kwargs)
 
     @cached_property
     def view_children(self):
