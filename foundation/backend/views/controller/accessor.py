@@ -104,9 +104,9 @@ class ModelPermissionsMixin(AppPermissionsMixin):
             else self.view.get_related_controller(permissions_model)
         )
 
-        # get the list of modes for the default route of registered controller
+        # get the list of all modes across all routes for this controller
         if permissions_controller:
-            modes = permissions_controller.get_modes()
+            modes = permissions_controller.all_modes
             public_modes = permissions_controller.public_modes
         # default to only public, list view when an inline (no controller)
         else:

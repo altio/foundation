@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.utils.functional import cached_property
 from .registry import Registry
 
 
@@ -75,3 +76,11 @@ class Router(Registry):
     def has_mode(self, mode, route=None):
         """ Return mode if it exists, else None. """
         return mode in self.get_modes(route=route)
+
+    @cached_property
+    def all_modes(self):
+        """ Return all named modes across all routes for this controller. """
+        modes = set()
+        for route in self._modes:
+            modes |= set(self.get_modes(route))
+        return modes
