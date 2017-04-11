@@ -230,6 +230,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         """
 
         return {
+            'backend': self,
             'site_title': self.site_title,
             'available_apps': self.get_available_apps(request),
         }

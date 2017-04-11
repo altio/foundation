@@ -18,8 +18,16 @@ class ExtendsNode(loader_tags.ExtendsNode):
         Make tag aware of contextual use of app_label and model_name
         """
 
-        app_label = context.get('app_label')
-        model_name = context.get('model_name')
+        # always start with view controller
+        view_controller = context.get('view_controller')
+        app_label = getattr(view_controller, 'app_label', None)
+        model_name = getattr(view_controller, 'model_name', None)
+
+        # then try app_config
+        if not app_label:
+            app_config = context.get('app_config')
+            if app_config:
+                app_label = app_config.label
 
         # RemovedInDjango20Warning: If any non-recursive loaders are installed
         # do a direct template lookup. If the same template name appears twice,
@@ -59,7 +67,6 @@ class IncludeNode(loader_tags.IncludeNode):
         self.isolated_context = kwargs.pop('isolated_context', False)
         loader_tags.Node.__init__(self, *args, **kwargs)  # prevent recursion
 
-
     def render(self, context):
         """
         Render the specified template and context. Cache the template object
@@ -69,6 +76,13 @@ class IncludeNode(loader_tags.IncludeNode):
         """
         try:
             template = self.template.resolve(context)
+
+            # pulled this up to use evaluated extra context inside conditional
+            extra_context = {
+                name: var.resolve(context)
+                for name, var in six.iteritems(self.extra_context)
+            }
+
             # Does this quack like a Template?
             if not callable(getattr(template, 'render', None)):
                 # If not, we'll try our cache, and get_template()
@@ -76,29 +90,41 @@ class IncludeNode(loader_tags.IncludeNode):
                 cache = context.render_context.setdefault(self.context_key, {})
                 template = cache.get(template_name)
                 if template is None:
-                    app_label = (
-                        self.extra_context['app_label'].var
-                        if 'app_label' in self.extra_context
-                        else context.get('app_label')
-                    )
-                    model_name = (
-                        self.extra_context['model_name'].var
-                        if 'model_name' in self.extra_context
-                        else context.get('model_name')
-                    )
+
+                    # extra context model_name and app_label have priority
+                    model_name = extra_context.get('model_name')
+                    app_label = extra_context.get('app_label')
+
+                    # if either missing, try extra context view_controller,
+                    # then view context view_controller
+                    if not (model_name and app_label):
+                        view_controller = extra_context.get(
+                            'view_controller',
+                            context.get('view_controller')
+                        )
+                        if view_controller:
+                            model_name = model_name or view_controller.model_name
+                            app_label = app_label or view_controller.app_label
+
+                    # if still no app_label, check app_config
+                    if not app_label:
+                        app_config = extra_context.get(
+                            'app_config',
+                            context.get('app_config')
+                        )
+                        if app_config:
+                            app_label = app_config.label
+
+                    # by now we do (not) have app_label (and model_name)
                     template = context.template.engine.get_template(
                         template_name,
                         app_label=app_label,
                         model_name=model_name
                     )
                     cache[template_name] = template
-            values = {
-                name: var.resolve(context)
-                for name, var in six.iteritems(self.extra_context)
-            }
             if self.isolated_context:
-                return template.render(context.new(values))
-            with context.push(**values):
+                return template.render(context.new(extra_context))
+            with context.push(**extra_context):
                 return template.render(context)
         except Exception:
             if context.template.engine.debug:

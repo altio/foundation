@@ -10,7 +10,7 @@ from django import forms
 from ...utils import get_deleted_objects
 
 from ...backend import views
-from .base import FormControllerViewMixin
+from .base import ControllerTemplateMixin
 from .components import BaseModelFormMixin
 
 
@@ -23,11 +23,10 @@ class ObjectMixin(views.ObjectMixin):
         return self.get_url('list')
 
 
-class DeleteView(ObjectMixin, views.BackendTemplateMixin, edit.BaseDeleteView):
+class DeleteView(ObjectMixin, ControllerTemplateMixin, edit.BaseDeleteView):
 
     mode = 'delete'
     mode_title = 'delete'
-    template_name = 'delete.html'
 
     def get_context_data(self, **kwargs):
         object_name = force_text(self.object._meta.verbose_name)
@@ -46,7 +45,7 @@ class DeleteView(ObjectMixin, views.BackendTemplateMixin, edit.BaseDeleteView):
         return super(DeleteView, self).get_context_data(**kwargs)
 
 
-class ProcessFormView(BaseModelFormMixin, ObjectMixin, FormControllerViewMixin,
+class ProcessFormView(BaseModelFormMixin, ObjectMixin, ControllerTemplateMixin,
                       edit.ModelFormMixin, edit.ProcessFormView):
     """ Single-Object ModelForm View Mixin """
 

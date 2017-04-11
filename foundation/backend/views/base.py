@@ -118,6 +118,7 @@ class AppTemplateMixin(AppMixin):
 
     def get_context_data(self, **kwargs):
         kwargs.update(
+            app_config=self.app_config,
             app_label=self.app_config.label,
             app_name=self.app_config.verbose_name,
             app_controllers=[self.backend.get_registered_controller(model)

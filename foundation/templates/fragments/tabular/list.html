@@ -37,7 +37,7 @@
 
     <tbody>
     {% for formset_form in formset %}
-      {% include 'fragments/tabular/object.html' %}
+      {% include 'fragments/tabular/object.html' with view_controller=formset_form.view_controller %}
     {% endfor %}
     </tbody>
   </table>

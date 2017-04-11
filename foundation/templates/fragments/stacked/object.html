@@ -18,7 +18,7 @@
 
 {% block fieldsets %}
   {% for fieldset in form.fieldsets.values %}
-    {% include fieldset.template %}
+    {% include fieldset.template with view_controller=form.view_controller %}
   {% endfor %}
 {% endblock %}
 

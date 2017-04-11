@@ -35,6 +35,8 @@ class TitleMixin(object):
 
 class FormChild(TitleMixin, FormSetMixin, views.ViewChild):
 
+    mode = 'list'
+
     @property
     def inline_template(self):
         return os.path.join(
@@ -75,22 +77,7 @@ class FormParent(BreadcrumbMixin, views.ViewParent):
     pass
 
 
-class FormControllerViewMixin(BreadcrumbMixin, views.ControllerViewMixin, views.BackendTemplateMixin):
-
-    def get_context_data(self, **kwargs):
-        opts = self.model._meta
-        app_label = opts.app_label
-        model_name = opts.model_name
-
-        kwargs.update({
-            'mode': self.mode,
-            'opts': opts,
-            'app_label': app_label,
-            'model_name': model_name,
-            'title': _(self.mode_title),
-        })
-
-        return super(FormControllerViewMixin, self).get_context_data(**kwargs)
+class ControllerTemplateMixin(BreadcrumbMixin, views.ControllerViewMixin, views.BackendTemplateMixin):
 
     def get_breadcrumbs(self):
 
@@ -116,6 +103,10 @@ class FormControllerViewMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
         breadcrumbs.append((self.get_title(), self.request.path))
 
         return breadcrumbs
+
+    def get_context_data(self, **kwargs):
+        kwargs['view_controller'] = self
+        return super(ControllerTemplateMixin, self).get_context_data(**kwargs)
 
     @property
     def template_name(self):

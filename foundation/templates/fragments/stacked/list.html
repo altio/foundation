@@ -7,7 +7,7 @@
     {{ formset.management_form }}
     {{ formset.non_form_errors }}
     {% for form in formset %}
-      {% include 'fragments/stacked/object.html' %}
+      {% include 'fragments/stacked/object.html' with view_controller=form.view_controller %}
     {% endfor %}
   </fieldset>
 </div>
