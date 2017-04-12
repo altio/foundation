@@ -28,7 +28,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
     create_permissions = False
     routes = ()
     site_index_class = TemplateView
-    template_name = 'index.html'
+    site_index_name = 'index'
     _empty_value_display = '-'
 
     @property
@@ -172,7 +172,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 url(r'^$',
                     self.site_index_class.as_view(
                         backend=self,
-                        template_name=self.template_name
+                        name=self.site_index_name,
                     ),
                     name='home')
             )

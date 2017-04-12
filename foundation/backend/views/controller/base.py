@@ -114,7 +114,6 @@ class ControllerViewMixin(BaseViewController):
 
     mode = None
     mode_title = ''
-    name = None
 
     def __init__(self, controller, **kwargs):
         kwargs.setdefault('view', self)

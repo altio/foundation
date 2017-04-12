@@ -57,7 +57,7 @@ class Router(Registry):
             if not hasattr(source, '_viewsets'):
                 source._viewsets = NamedRouter(source.backend)
             if not route in source._viewsets:
-                source._viewsets[route] = viewset(**view_kwargs)
+                source._viewsets[route] = viewset(route=route, **view_kwargs)
             viewset_urlpatterns = source._viewsets[route].get_urlpatterns()
             if viewset_urlpatterns:
                 urlpatterns[route].extend(viewset_urlpatterns)

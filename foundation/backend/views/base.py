@@ -61,6 +61,8 @@ class BackendMixin(DispatchMixin):
     """
 
     backend = None
+    route = None
+    name = None
 
 
 class View(BackendMixin, base.View):
@@ -70,6 +72,7 @@ class View(BackendMixin, base.View):
 class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
                            base.ContextMixin):
 
+    # TODO: extract mode/mode_title pieces from controller as needed
     mode_title = ''
     response_class = TemplateResponse
 
@@ -81,6 +84,13 @@ class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
         # in case backend passed media, overwrite it with backend et al
         kwargs['media'] = self.get_media()
         return super(BackendMixin, self).get_context_data(**kwargs)
+
+    @property
+    def template_name(self):
+        return '{}{}.html'.format(
+            '{}/'.format(self.route) if self.route else '',
+            self.name,
+        )
 
 
 class TemplateView(BackendTemplateMixin, base.TemplateView):
