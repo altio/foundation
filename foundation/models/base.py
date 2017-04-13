@@ -34,7 +34,8 @@ class Model(AssociativeMixin, models.Model):
 
     def save(self, force_insert=False, force_update=False, using=None,
              update_fields=None):
-        self.full_clean(exclude=None, validate_unique=True)
+        if getattr(self, '_validate', True):
+            self.full_clean(exclude=None, validate_unique=True)
         super(Model, self).save(
             force_insert=force_insert, force_update=force_update,
             using=using, update_fields=update_fields
