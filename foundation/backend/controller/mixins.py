@@ -17,7 +17,7 @@ class SingleObjectMixin(object):
 
         model = queryset.model
 
-        object_id = self.view.kwargs.get(self.model_lookup)
+        object_id = self.view.kwargs.get(self.controller.model_lookup)
 
         obj = None
         if object_id:
