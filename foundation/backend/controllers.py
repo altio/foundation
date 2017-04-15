@@ -28,7 +28,6 @@ class Controller(Router, BaseController):
     inlines = ()
     parent = None
     registrar = None
-    force_backend_as_registrar = False
 
     # move this to filter component
     filter_horizontal = ()

@@ -87,15 +87,8 @@ class Registry(object):
 
             # handle all child registrations at this time
             for child_controller_class in controller_class.children:
-
-                if child_controller_class.force_backend_as_registrar:
-                    child_model = child_controller_class.model
-                    controller_obj.backend.register(child_model,
-                                                    child_controller_class,
-                                                    parent=controller_obj)
-                else:
-                    controller_obj.register(child_controller_class,
-                                            parent=controller_obj)
+                controller_obj.register(child_controller_class,
+                                        parent=controller_obj)
 
     def unregister(self, model_or_iterable):
         """
