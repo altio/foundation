@@ -19,7 +19,8 @@ class ModelAccessor(object):
 
     @cached_property
     def fk(self):
-        if self.controller.is_root and not self.fk_name:
+        # if controller exists (not inline) and is root and no FK name spec'ed
+        if (self.controller and self.controller.is_root) and not self.fk_name:
             raise ValueError('Must specify an "fk_name" for root Controllers '
                              'if you intend to lean on fk constraints.')
         return _get_foreign_key(self.parent_model, self.model, self.fk_name)

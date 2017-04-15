@@ -5,11 +5,12 @@ from .. import backend
 from . import models
 from .views.base import FormChild, FormParent
 from .viewsets import FormViewSet
+from django.utils.functional import cached_property
 
 __all__ = 'FormController', 'FormInline'
 
 
-class FormOptions(object):
+class FormOptions(backend.controllers.PartialViewOptions):
 
     prepopulated_fields = {}
     readonly_fields = ()
@@ -47,4 +48,23 @@ class FormController(FormOptions, backend.Controller):
 
 
 class FormInline(FormOptions, FormChild):
-    pass
+
+    @cached_property
+    def parent_model(self):
+        return self.view.controller.model
+
+    def __getattribute__(self, name):
+        """
+        When a normal lookup fails, perform a secondary lookup in the model.
+        """
+        super_getattr = super(FormInline, self).__getattribute__
+
+        try:
+            return super_getattr(name)
+        except AttributeError as e:
+            model = super_getattr('model')
+            try:
+                return getattr(model._meta, name)
+            except AttributeError:
+                raise e
+

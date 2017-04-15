@@ -35,12 +35,12 @@ class BaseModelFormMixin(object):
     and access to the controller (registered) via self.controller.
     """
 
-    def __init__(self, **kwargs):
-        super(BaseModelFormMixin, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(BaseModelFormMixin, self).__init__(*args, **kwargs)
         # Merge FORMFIELD_FOR_DBFIELD_DEFAULTS with the formfield_overrides
         # rather than simply overwriting.
         overrides = copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS)
-        for k, v in self.controller.formfield_overrides.items():
+        for k, v in self.formfield_overrides.items():
             overrides.setdefault(k, {}).update(v)
         self.formfield_overrides = overrides
 

@@ -9,31 +9,50 @@ from .router import Router
 __all__ = 'Controller',
 
 
-class Controller(Router, BaseController):
+class ModelOptions(object):
+    """ Describes how to represent a Model for a Controller. """
+
+    fields = None
+    exclude = None
+    fieldsets = None
+    ordering = None
+
+
+class PartialViewOptions(ModelOptions):
+    """
+    Describes inter-relationships needed for partial view composition.
+    NOTE: This is expected to be the base for FormOptions, and thus, Inlines.
+    """
+
+    fk_name = None
+    model = None
+    parent = None
+
+
+class ViewOptions(PartialViewOptions):
+    """ Describes configurable options only for URL-accessible base Views. """
+
+    children = ()
+    inlines = ()
+    # move this to filter component
+    filter_horizontal = ()
+    filter_vertical = ()
+
+
+class ControllerOptions(ViewOptions):
+    """ Configurable options for registered controllers. """
+
+    checks_class = None
+    registrar = None
+    public_modes = ()
+
+
+class Controller(ControllerOptions, Router, BaseController):
     """
     Controllers need the ability to:
     a) generate the URLs needed for the Backend
     b) generate the JIT (View, Inline, and Parent) Controller for each View
     """
-
-    fields = None
-    exclude = None
-    fieldsets = None
-    fk_name = None
-    model = None
-    ordering = None
-
-    checks_class = None
-    children = ()
-    inlines = ()
-    parent = None
-    registrar = None
-
-    # move this to filter component
-    filter_horizontal = ()
-    filter_vertical = ()
-
-    public_modes = ()
 
     def __init__(self, parent, registrar=None):
         """

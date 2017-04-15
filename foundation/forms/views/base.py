@@ -24,12 +24,12 @@ class TitleMixin(object):
                 if self.view_parent
                 else _('all') if self.public_modes else str(self.user) + "'s"
             )
-            ret += ' {}'.format(self.controller.verbose_name_plural)
+            ret += ' {}'.format(self.verbose_name_plural)
         else:
             obj = getattr(self, 'object', None)
             return ('{} {}'.format(title(self.view.mode_title), obj)
                 if obj
-                else title('{} {}'.format(self.view.mode_title, self.controller.verbose_name)))
+                else title('{} {}'.format(self.view.mode_title, self.verbose_name)))
         return ret
 
 
