@@ -12,6 +12,7 @@ from ...utils import get_deleted_objects
 from ...backend import views
 from .base import ControllerTemplateMixin
 from .components import BaseModelFormMixin
+from foundation.utils import flatten_fieldsets
 
 
 __all__ = 'AddView', 'EditView', 'DisplayView', 'DeleteView'
@@ -62,17 +63,14 @@ class ProcessFormView(BaseModelFormMixin, ObjectMixin, ControllerTemplateMixin,
         TODO: Better handle the case where of no child controller (e.g. a check)
         """
         obj = None if self.add else self.object
-        # fields = flatten_fieldsets(self.get_fieldsets(self.mode))
+        # we will only generate formsets for the fields specified for this view
+        fields = flatten_fieldsets(self.get_fieldsets(self.mode))
         inline_formsets = {}
         for name, view_child in self.view_children.items():
-            inline_fk_field = _get_foreign_key(
-                self.model, view_child.model, view_child.fk_name)
-            # if inline_fk_field.remote_field.name not in fields:
-            #     continue  # TODO: Fail Check
-            formset_class = view_child.get_formset_class(obj)
-            formset_kwargs = view_child.get_formset_kwargs(
-                formset_class=formset_class, obj=obj)
-            inline_formsets[name] = formset_class(**formset_kwargs)
+            # do not make the inline formset if not an accessible form field
+            if name not in fields:
+                continue
+            inline_formsets[name] = view_child.get_formset(obj=obj)
         return inline_formsets
 
     def get(self, request, *args, **kwargs):
