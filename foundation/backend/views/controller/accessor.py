@@ -9,6 +9,44 @@ from ..base import AppPermissionsMixin
 class ModelPermissionsMixin(AppPermissionsMixin):
 
     @cached_property
+    def user(self):
+        """ Shortcut to user on request via auth middleware. """
+        return self.view.request.user
+
+    @cached_property
+    def auth_object(self):
+        """ The top-level object used by the view for providing auth. """
+        return self.user
+
+    @property
+    def has_acting_superuser(self):
+        """ Returns True if view user is superuser and acting as such. """
+        return self.user.is_superuser and \
+            self.view.request.session.get('act_as_superuser')
+
+    @cached_property  # TODO: test this is safe... cloning still works, right?
+    def private_queryset(self):
+        """ Returns the auth-permitted queryset when not an acting superuser. """
+
+        # if not acting as superuser, apply access controls, filtering down to
+        # none if there are no authorized objects
+        return (
+            super(ModelPermissionsMixin, self).get_queryset()
+            if self.has_acting_superuser
+            else self.get_auth_queryset(self.auth_object)
+        )
+
+    def get_queryset(self):
+        """ Returns the private queryset when not an acting superuser. """
+
+        # do not auth constrain default queryset if controller has public modes
+        return (
+            super(ModelPermissionsMixin, self).get_queryset()
+            if self.public_modes
+            else self.private_queryset
+        )
+
+    @cached_property
     def view_parent(self):
         view_parent = None
 
@@ -27,60 +65,6 @@ class ModelPermissionsMixin(AppPermissionsMixin):
         while view_parent:
             yield view_parent
             view_parent = view_parent.view_parent
-
-    @cached_property
-    def user(self):
-        return self.view.request.user
-
-    @cached_property
-    def auth_user_query(self):
-        auth_user_query = (
-            self.fk_name
-            if self.controller.is_root
-            else (
-                '__'.join([self.fk.name, self.view_parent.auth_user_query])
-                if self.view_parent.auth_user_query
-                else None
-        ))
-        return auth_user_query 
-
-    @cached_property
-    def auth_query(self):
-        return (
-            {self.auth_user_query: self.user}
-            if self.auth_user_query and self.user.is_active
-            else {}
-        )
-
-    @property
-    def has_acting_superuser(self):
-        return self.user.is_superuser and \
-            self.view.request.session.get('act_as_superuser')
-
-    @cached_property  # TODO: test this is safe... cloning still works, right?
-    def private_queryset(self):
-
-        # avoid cyclic dependency
-        queryset = super(ModelPermissionsMixin, self).get_queryset()
-
-        # if not acting as superuser, apply access controls, filtering down to
-        # none if there are no authorized objects
-        if not self.has_acting_superuser:
-            queryset = (
-                queryset.filter(**self.auth_query)
-                if self.auth_query
-                else queryset.none()
-            )
-        return queryset
-
-    def get_queryset(self):
-
-        # do not auth constrain default queryset if controller has public modes
-        return (
-            super(ModelPermissionsMixin, self).get_queryset()
-            if self.public_modes
-            else self.private_queryset
-        )
 
     def get_permissions_model(self):
         return self.model

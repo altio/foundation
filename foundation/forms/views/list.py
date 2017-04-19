@@ -20,10 +20,8 @@ class ListView(FormSetMixin, ControllerTemplateMixin, ListMixin, list.ListView):
             handler, request, *args, **kwargs
         )
 
-        # parent_obj will be needed for non-local roots since they will use FK
-        # to build out an inline formset and provide add/edit inline
         parent_obj = (self.view_parent.get_object()
-                      if not self.controller.is_local_root
+                      if self.view_parent
                       else None)
 
         # feed the par-reduced queryset to formset, which will in turn FK
