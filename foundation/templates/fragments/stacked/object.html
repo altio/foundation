@@ -1,20 +1,6 @@
 {% load i18n static %}
 
-{% block before-fieldsets %}
-<h2>
-  <span>{{ view.get_title | capfirst }}</span>
-  {% block object-actions %}
-    <span>
-    {% if not view.edit %}
-      {% ifpermission 'edit' %}&nbsp;<a href="{% mode_url 'edit' %}">{% trans 'Edit' %}</a>{% endifpermission %}
-    {% endif %}
-    {% if not view.add %}
-      {% ifpermission 'delete' %}&nbsp;<a href="{% mode_url 'delete' %}">{% trans 'Delete' %}</a>{% endifpermission %}
-    {% endif %}
-    </span>
-  {% endblock %}
-</h2>
-{% endblock %}
+{% block before-fieldsets %}{% endblock %}
 
 {% block fieldsets %}
   {% for fieldset in form.fieldsets.values %}
