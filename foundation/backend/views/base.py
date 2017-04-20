@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
+from django.template.exceptions import TemplateDoesNotExist
 from django.views.generic import base
 
 from ...template.response import TemplateResponse
@@ -75,6 +76,7 @@ class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
     # TODO: extract mode/mode_title pieces from controller as needed
     mode_title = ''
     response_class = TemplateResponse
+    _template_name = None
 
     def get_media(self):
         return self.backend.media
@@ -87,10 +89,24 @@ class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
 
     @property
     def template_name(self):
-        return '{}{}.html'.format(
-            '{}/'.format(self.route) if self.route else '',
-            self.name,
-        )
+        """
+        Returns the setter-set template_name without modification, or the
+        template name composed of this view's route and name.
+        """
+        if not self._template_name:
+            if not self.name:
+                raise TemplateDoesNotExist(
+                    'The view must be provided with a "name" or "template_name"'
+                )
+            self._template_name = '{}{}.html'.format(
+                '{}/'.format(self.route) if self.route else '',
+                self.name,
+            )
+        return self._template_name
+
+    @template_name.setter
+    def template_name(self, val):
+        self._template_name = val
 
 
 class TemplateView(BackendTemplateMixin, base.TemplateView):
