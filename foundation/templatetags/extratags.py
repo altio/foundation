@@ -1,3 +1,4 @@
+from django.db.models import QuerySet, Model
 from django.template.defaulttags import register, Node, NodeList, TemplateSyntaxError
 from foundation.forms import models
 
@@ -20,6 +21,11 @@ class IfPermissionNode(Node):
             view_controller = context['view']
             if 'form' in context:
                 obj = context['form'].instance
+        elif isinstance(obj, QuerySet):
+            view_controller = getattr(obj, 'view_controller', context['view'])
+            obj = None
+        elif isinstance(obj, Model):
+            view_controller = getattr(obj, 'view_controller', context['view'])
         elif isinstance(obj, models.BaseInlineFormSet):
             view_controller = obj.view_controller
             obj = obj.instance
@@ -85,6 +91,11 @@ def mode_url(context, mode, obj=None, route=None):
         view_controller = context['view']
         if 'form' in context:
             obj = context['form'].instance
+    elif isinstance(obj, QuerySet):
+        view_controller = getattr(obj, 'view_controller', context['view'])
+        obj = None
+    elif isinstance(obj, Model):
+        view_controller = getattr(obj, 'view_controller', context['view'])
     elif isinstance(obj, models.BaseInlineFormSet):
         view_controller = obj.view_controller
         obj = obj.instance
