@@ -36,6 +36,7 @@ class DispatchMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         """ HARD OVERRIDE OF View """
+
         handler = self.get_handler(request, *args, **kwargs)
 
         # normal behavior

@@ -48,7 +48,7 @@ class BlogController(APIFormController):
                 # template_name?
             }),
             ('tabs', {
-                'fields': ('description', 'post_set'),
+                'fields': ('description', 'blog_entries'),
                 'template_name': 'tabs.html'
             }),
         ),

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.db.models import *
 
+from .auth import *
 from .base import *
 from .fields import *
 from .manager import *

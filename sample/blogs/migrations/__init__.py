@@ -11,7 +11,7 @@ def generate_initial_data(apps, schema_editor):
     config.create_fixtures(apps)
 
     # add service for all users
-    User = apps.get_model('auth', 'user')
+    User = apps.get_model('blogs', 'user')
     for name in ('Joe', 'Sarah', 'Bob', 'Lucy', 'Admin'):
         User.objects.create(
             username=name.lower(),

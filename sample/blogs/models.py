@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
-from foundation import models
+from django.contrib.auth import models as auth_models
 from django.template.defaultfilters import slugify
 from django.utils import lorem_ipsum
+from foundation import models
+
+
+class User(models.ActiveSuperuserMixin, auth_models.AbstractUser):
+    """ Treat as superusers only if is_superuser and "acting" flag set. """
 
 
 class Blog(models.Model):
 
     owner = models.ForeignKey(
-        'auth.User',
+        User,
         related_name='blogs',
     )
 
@@ -35,13 +40,9 @@ class Post(models.Model):
 
     blog = models.ForeignKey(
         to=Blog,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='blog_entries',
     )
-
-    """publisher = models.ForeignKey(
-        Person,
-        related_name='posts',
-    )"""
 
     slug = models.SlugField(
         max_length=50,

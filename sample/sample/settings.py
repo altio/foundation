@@ -57,7 +57,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'foundation.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -95,6 +95,13 @@ DATABASES = {
     }
 }
 
+# Swappable User Model
+# https://docs.djangoproject.com/en/1.9/ref/settings/#auth-user-model
+AUTH_USER_MODEL = 'blogs.User'
+
+# Custom Auth Backend
+# https://docs.djangoproject.com/en/1.10/ref/settings/#authentication-backends
+AUTHENTICATION_BACKENDS = ['foundation.auth.backends.ModelBackend']
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators

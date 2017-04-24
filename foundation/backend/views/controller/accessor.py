@@ -8,12 +8,12 @@ from ..base import AppPermissionsMixin
 
 class ModelPermissionsMixin(AppPermissionsMixin):
 
-    @cached_property
+    @property
     def user(self):
         """ Shortcut to user on request via auth middleware. """
         return self.view.request.user
 
-    @cached_property
+    @property
     def auth_object(self):
         """ The top-level object used by the view for providing auth. """
         return self.user
@@ -21,8 +21,7 @@ class ModelPermissionsMixin(AppPermissionsMixin):
     @property
     def has_acting_superuser(self):
         """ Returns True if view user is superuser and acting as such. """
-        return self.user.is_superuser and \
-            self.view.request.session.get('act_as_superuser')
+        return getattr(self.user, 'is_acting_superuser', False)
 
     @cached_property  # TODO: test this is safe... cloning still works, right?
     def private_queryset(self):
@@ -69,8 +68,7 @@ class ModelPermissionsMixin(AppPermissionsMixin):
     def get_permissions_model(self):
         return self.model
 
-    @cached_property
-    def permissions(self):
+    def get_permissions(self):
         """
         Returns the list of permissions this ViewController has available to it
         given the user attached to the View.
@@ -126,5 +124,4 @@ class ModelPermissionsMixin(AppPermissionsMixin):
         Returns a boolean whether this ViewController has general access to a
         specified mode regardless of per-object permissions.
         """
-
-        return mode in self.permissions
+        return mode in self.get_permissions()
