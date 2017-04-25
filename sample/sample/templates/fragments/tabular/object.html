@@ -1,12 +1,30 @@
 {% extends 'fragments/tabular/object.html' %}
+{% load i18n sekizai_tags %}
 
 {% block column-actions %}
-<td class="text-right">
   {% ifpermission 'edit' formset_form %}
     <a href="{% mode_url 'edit' formset_form %}" class="btn btn-xs btn-primary"><i class="fa fa-edit fa-fw"></i></a>&nbsp;
   {% endifpermission %}
   {% ifpermission 'delete' formset_form %}
-    <a href="{% mode_url 'delete' formset_form %}" class="btn btn-xs btn-danger"><i class="fa fa-trash fa-fw"></i></a>
+    <button type="button" class="btn btn-xs btn-danger" data-toggle="modal" data-target="#modal-container" data-url="{% mode_url 'delete' formset_form route='embed' %}"><i class="fa fa-trash fa-fw"></i></button>
+    {% addtoblock 'js' %}
+    <script>
+      $('#modal-container').on('show.bs.modal', function(event) {
+
+        /* get the triggering element and data attributes */
+        var trigger = $(event.relatedTarget);
+        var url = trigger.data('url');
+
+        /* get the embedded form and render it */
+        $.ajax({
+          type: "GET",
+          url: url,
+          contentType: "text/html; charset=utf-8",
+        }).done(function(data, textStatus, jqXHR) {
+          $('#modal-container .modal-content').html(data);
+        });
+      })
+    </script>
+    {% endaddtoblock %}
   {% endifpermission %}
-</td>
 {% endblock %}

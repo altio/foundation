@@ -12,10 +12,7 @@ class SiteConfig(AppConfig):
 
 class SiteBackend(Backend):
 
-    routes = ('ahah', 'ajax', 'api')
-    views = (
-        'home'
-    )
+    routes = ('ajax', 'api', 'embed')
     site_index_class = SiteIndexView
     create_permissions = True
 

@@ -30,10 +30,6 @@
                       <span class="fa fa-caret-down"></span>
                     </a>
                     <ul class="dropdown-menu">
-                      <li><a href="#"><i class="fa fa-pencil fa-fw"></i> Edit</a></li>
-                      <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> Delete</a></li>
-                      <li><a href="#"><i class="fa fa-ban fa-fw"></i> Ban</a></li>
-                      <li class="divider"></li>
                       {% if user.is_superuser %}
                         <li><a href="{% url 'toggle_superuser' %}">
                           {% if request.session.act_as_superuser %}
@@ -149,6 +145,15 @@
      {{ block.super }}{# content #}
      {% endblock content %}
      </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Modal -->
+<div class="modal fade" id="modal-container" tabindex="-1" role="dialog" aria-labelledby="modal-container">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content"></div>
   </div>
 </div>
 {% endblock %}

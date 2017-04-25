@@ -15,7 +15,10 @@ class APIFormController(forms.FormController):
     viewsets = {
         None: forms.FormViewSet,
         'api': rest.APIViewSet,
+        'embed': forms.FormViewSet,
     }
+
+    view_mixin_class = ViewMixin
 
 
 class PostController(APIFormController):
