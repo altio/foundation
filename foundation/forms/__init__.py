@@ -1,5 +1,5 @@
 from django.forms import *
-del fields, forms, models
+del fields, forms, models, widgets
 from .controllers import *
 from .fields import *
 from .fieldsets import Fieldset

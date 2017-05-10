@@ -22,6 +22,7 @@ __all__ = widgets.__all__ + (
     'FilteredSelectMultiple', 'ForeignKeyRawIdWidget', 'ForeignKeyRawIdWidget',
     'RelatedFieldWidgetWrapper'
 )
+del widgets
 
 
 class FilteredSelectMultiple(SelectMultiple):
@@ -81,9 +82,9 @@ class ForeignKeyRawIdWidget(TextInput):
     A Widget for displaying ForeignKeys in the "raw_id" interface rather than
     in a <select> box.
     """
-    def __init__(self, rel, admin_site, attrs=None, using=None):
+    def __init__(self, rel, view_controller, attrs=None, using=None):
         self.rel = rel
-        self.admin_site = admin_site
+        self.view_controller = view_controller
         self.db = using
         super(ForeignKeyRawIdWidget, self).__init__(attrs)
 
@@ -92,14 +93,14 @@ class ForeignKeyRawIdWidget(TextInput):
         if attrs is None:
             attrs = {}
         extra = []
-        if rel_to in self.admin_site._registry:
+        if rel_to in self.view_controller._registry:
             # The related object is registered with the same AdminSite
             related_url = reverse(
                 'admin:%s_%s_changelist' % (
                     rel_to._meta.app_label,
                     rel_to._meta.model_name,
                 ),
-                current_app=self.admin_site.name,
+                current_app=self.view_controller.name,
             )
 
             params = self.url_parameters()
@@ -144,7 +145,7 @@ class ForeignKeyRawIdWidget(TextInput):
         try:
             change_url = reverse(
                 '%s:%s_%s_change' % (
-                    self.admin_site.name,
+                    self.view_controller.name,
                     obj._meta.app_label,
                     obj._meta.object_name.lower(),
                 ),

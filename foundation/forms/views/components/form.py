@@ -12,7 +12,7 @@ from django.utils.translation import string_concat, ugettext as _
 
 from django import forms
 from ....utils import flatten_fieldsets
-from ...widgets import RelatedFieldWidgetWrapper
+from ... import widgets
 
 __all__ = ('BaseModelFormMixin', 'HORIZONTAL',
            'VERTICAL', 'FORMFIELD_FOR_DBFIELD_DEFAULTS')
@@ -279,7 +279,7 @@ class BaseModelFormMixin(object):
                 #         can_change_related=related_controller.has_permission('change'),
                 #         can_delete_related=related_controller.has_permission('delete'),
                 #     )
-                formfield.widget = RelatedFieldWidgetWrapper(
+                formfield.widget = widgets.RelatedFieldWidgetWrapper(
                     formfield.widget, db_field.remote_field, related_controller, **wrapper_kwargs
                 )
 
@@ -333,13 +333,11 @@ class BaseModelFormMixin(object):
         """
         Get a form Field for a ForeignKey.
         """
-        from django.contrib.admin import widgets
-
         db = kwargs.get('using')
         if db_field.name in self.raw_id_fields:
-            kwargs['widget'] = widgets.ForeignKeyRawIdWidget(db_field.remote_field, self.admin_site, using=db)
+            kwargs['widget'] = widgets.ForeignKeyRawIdWidget(db_field.remote_field, self, using=db)
         elif db_field.name in self.radio_fields:
-            kwargs['widget'] = widgets.AdminRadioSelect(attrs={
+            kwargs['widget'] = widgets.RadioSelect(attrs={
                 'class': get_ul_class(self.radio_fields[db_field.name]),
             })
             kwargs['empty_label'] = _('None') if db_field.blank else None
@@ -357,8 +355,6 @@ class BaseModelFormMixin(object):
         """
         # If it uses an intermediary model that isn't auto created, don't show
         # a field in admin.
-        from django.contrib.admin import widgets
-
         if not db_field.remote_field.through._meta.auto_created:
             return None
         db = kwargs.get('using')
