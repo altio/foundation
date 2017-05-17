@@ -9,9 +9,8 @@
     {% csrf_token %}
 {% endblock %}
 
-{% block form-title %}
+{% block form-header %}
   <h2>
-    <span>{{ view.get_title | capfirst }}</span>
     {% block object-actions %}
     <span>
       {% if not view.edit %}
@@ -19,6 +18,9 @@
       {% endif %}
       {% ifpermission 'delete' %}&nbsp;<a href="{% mode_url 'delete' %}">{% trans 'Delete' %}</a>{% endifpermission %}
     </span>
+    {% endblock %}
+    {% block form-title %}
+    <span>{{ view.get_title | capfirst }}</span>
     {% endblock %}
   </h2>
 {% endblock %}
