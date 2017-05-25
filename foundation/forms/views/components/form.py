@@ -27,6 +27,20 @@ def get_ul_class(radio_style):
     return 'radiolist' if radio_style == VERTICAL else 'radiolist inline'
 
 
+def widget_template(widget):
+    template_name =  getattr(widget, 'template_name', None)
+    widget.edit_template = (
+        'fragments/field/edit/{}'.format(template_name)
+        if template_name
+        else None
+    )
+    widget.display_template = (
+        'fragments/field/display/{}'.format(template_name)
+        if template_name
+        else None
+    )
+
+
 class BaseModelFormMixin(object):
     """
     Common base for ModelForm yielding views that does not make presumptions
@@ -247,11 +261,12 @@ class BaseModelFormMixin(object):
         """
         # If the field specifies choices, we don't need to look for special
         # admin widgets - we just need to use a select widget of some kind.
+        formfield = None
         if db_field.choices:
-            return self.formfield_for_choice_field(db_field, **kwargs)
+            formfield = self.formfield_for_choice_field(db_field, **kwargs)
 
         # ForeignKey or ManyToManyFields
-        if isinstance(db_field, models.ManyToManyField) or isinstance(db_field, models.ForeignKey):
+        if not formfield and (isinstance(db_field, models.ManyToManyField) or isinstance(db_field, models.ForeignKey)):
             # Combine the field kwargs with any options for formfield_overrides.
             # Make sure the passed in **kwargs override anything in
             # formfield_overrides because **kwargs is more specific, and should
@@ -283,17 +298,22 @@ class BaseModelFormMixin(object):
                     formfield.widget, db_field.remote_field, related_controller, **wrapper_kwargs
                 )
 
-            return formfield
-
         # If we've got overrides for the formfield defined, use 'em. **kwargs
         # passed to formfield_for_dbfield override the defaults.
-        for klass in db_field.__class__.mro():
-            if klass in self.formfield_overrides:
-                kwargs = dict(copy.deepcopy(self.formfield_overrides[klass]), **kwargs)
-                return db_field.formfield(**kwargs)
+        if not formfield:
+            for klass in db_field.__class__.mro():
+                if klass in self.formfield_overrides:
+                    kwargs = dict(copy.deepcopy(self.formfield_overrides[klass]), **kwargs)
+                    formfield = db_field.formfield(**kwargs)
 
         # For any other type of field, just call its formfield() method.
-        return db_field.formfield(**kwargs)
+        if not formfield:
+            formfield = db_field.formfield(**kwargs)
+
+        # allows a widget to look to templates for design in lieu of code
+        widget_template(formfield.widget)
+
+        return formfield
 
     def formfield_for_choice_field(self, db_field, **kwargs):
         """

@@ -20,7 +20,7 @@ from django.utils.translation import ugettext as _
 
 __all__ = widgets.__all__ + (
     'FilteredSelectMultiple', 'ForeignKeyRawIdWidget', 'ForeignKeyRawIdWidget',
-    'RelatedFieldWidgetWrapper'
+    'RelatedFieldWidgetWrapper', 'CurrencyInput'
 )
 del widgets
 
@@ -290,3 +290,8 @@ class RelatedFieldWidgetWrapper(Widget):
 
     def id_for_label(self, id_):
         return self.widget.id_for_label(id_)
+
+
+class CurrencyInput(NumberInput):
+
+    template_name = 'currency.html'
