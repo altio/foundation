@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n static %}
+{% load i18n static list %}
 
 {% block bodyclass %}{{ block.super }} app-{{ view.app_label }} model-{{ view.model_name }} change-list{% endblock %}
 
@@ -22,8 +22,8 @@
     {% endblock %}
     {% endcomment %}
     <h3>{{ formset.view_controller.get_title|title }}</h3>
-      {% include view.view_template %}
-    {% block pagination %}{% endblock pagination %}
+    {% include view.view_template %}
+    {% block pagination %}{% pagination view_controller %}{% endblock %}
     </form>
   </div>
 

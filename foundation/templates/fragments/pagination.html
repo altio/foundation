@@ -1,0 +1,29 @@
+{% load i18n list %}
+<p class="paginator">
+{% if not view.can_show_all %}
+<nav aria-label="Page navigation">
+  <ul class="pagination">
+    {% if previous_page %}
+    <li>
+      <a href="{{ previous_page }}" aria-label="Previous">
+        <span aria-hidden="true">&laquo;</span>
+      </a>
+    </li>
+    {% endif %}
+    {% for i in page_range %}
+      {% paginator_number view i %}
+    {% endfor %}
+    {% if next_page %}
+    <li>
+      <a href="{{ next_page }}" aria-label="Next">
+        <span aria-hidden="true">&raquo;</span>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{{ view.result_count }} {% if view.result_count == 1 %}{{ view.verbose_name }}{% else %}{{ view.verbose_name_plural }}{% endif %}
+{% if view.show_all_url %}&nbsp;&nbsp;<a href="{{ show_all_url }}" class="showall">{% trans 'Show all' %}</a>{% endif %}
+{% if view.formset and view.result_count %}<input type="submit" name="_save" class="default" value="{% trans 'Save' %}"/>{% endif %}
+</p>

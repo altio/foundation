@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf.urls import url, include
+from django.core.paginator import Paginator
 
 from .controller import BaseController
 from .router import Router
@@ -34,9 +35,12 @@ class ViewOptions(PartialViewOptions):
 
     children = ()
     inlines = ()
-    # move this to filter component
-    filter_horizontal = ()
-    filter_vertical = ()
+
+    # pagination options
+    paginator_class = Paginator
+    list_per_page = 20
+    list_max_show_all = 200
+    show_full_result_count = True
 
 
 class ControllerOptions(ViewOptions):
