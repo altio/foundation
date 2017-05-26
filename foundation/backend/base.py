@@ -14,9 +14,7 @@ from .registry import NotRegistered
 from .router import Router
 from .views import TemplateView, AppTemplateView
 from django.conf.urls import url, include
-from django.shortcuts import resolve_url
-from django.urls.exceptions import NoReverseMatch
-from foundation.utils import namespace_in_urlpatterns
+from django.urls import resolve
 
 __all__ = 'Backend', 'backends', 'get_backend'
 
@@ -212,14 +210,15 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 is_visible = True
             if is_visible:
                 try:
-                    is_visible = (
-                        resolve_url('/' + app_config.url_prefix)
-                        if getattr(app_config, 'url_prefix', None)
-                        else False
-                    )
-                except NoReverseMatch:
-                    is_visible = False
-            available_apps[app_config] = is_visible
+                    url = getattr(app_config, 'url_prefix', None)
+                    if url is None:
+                        url = app_config.label
+                    url = ('/' + url + '/') if url else '/'
+                    resolve(url)
+                except:
+                    url = None
+
+            available_apps[app_config] = url
 
         return available_apps
 

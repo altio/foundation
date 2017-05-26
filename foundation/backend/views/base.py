@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from collections import OrderedDict
 from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.views.generic import base
+from django.urls import resolve
 
 from ...template.response import TemplateResponse
 from ...utils import redirect_to_url
@@ -143,14 +145,46 @@ class AppView(AppMixin, View):
 
 class AppTemplateMixin(AppMixin):
 
+    def get_app_controllers(self):
+        """
+        Returns a sorted list of all of the registered model controllers that
+        are accessible to the user.
+        """
+        user = self.request.user
+        available_controllers = OrderedDict()
+
+        app_url = getattr(self.app_config, 'url_prefix', None)
+        if app_url is None:
+            app_url = self.app_config.label
+        app_url = ('/' + app_url + '/') if app_url else '/'
+
+        for model in sorted([model
+                             for model in self.app_config.get_models()
+                             if self.backend.has_registered_controller(model)],
+                             key=lambda model: model._meta.verbose_name):
+            is_visible = False
+            controller = self.backend.get_registered_controller(model)
+            verbose_name = model._meta.verbose_name
+            if controller.public_modes:
+                is_visible = True
+            elif user.has_module_perms(verbose_name):
+                is_visible = True
+            if is_visible:
+                try:
+                    url = app_url + controller.url_prefix
+                    resolve(url)
+                except:
+                    url = None
+            available_controllers[controller] = url
+
+        return available_controllers
+
     def get_context_data(self, **kwargs):
         kwargs.update(
             app_config=self.app_config,
             app_label=self.app_config.label,
             app_name=self.app_config.verbose_name,
-            app_controllers=[self.backend.get_registered_controller(model)
-                             for model in self.app_config.get_models()
-                             if self.backend.has_registered_controller(model)],
+            app_controllers=self.get_app_controllers(),
         )
         return super(AppMixin, self).get_context_data(**kwargs)
 

@@ -11,8 +11,10 @@
           </div>
           <div class="panel-body">
             <ul>
-              {% for controller in app_controllers %}
-                <li><a href="{{ controller.get_index_url }}">{{ controller.verbose_name_plural | title }}</a></li>
+              {% for controller, url in app_controllers.items %}
+                {% if url %}
+                <li><a href="{{ url }}">{{ controller.verbose_name_plural | title }}</a></li>
+                {% endif %}
               {% endfor %}
             </ul>
           </div>
