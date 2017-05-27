@@ -8,8 +8,8 @@
 {% block content %}
 <div id="content-main">
   <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    {% block search %}{% search_form view %}{% endblock %}
     {% comment %}
-    {% block search %}{% search_form cl %}{% endblock %}
     {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
 
     {% block filters %}

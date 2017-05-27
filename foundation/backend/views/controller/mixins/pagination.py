@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib.admin.options import IncorrectLookupParameters
 from django.core.paginator import PageNotAnInteger, InvalidPage
 
 from .variables import ALL_VAR, PAGE_VAR
-from django.contrib.admin.options import IncorrectLookupParameters
 
 __all__ = 'PaginationMixin',
 

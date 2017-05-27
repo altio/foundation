@@ -4,7 +4,7 @@ from django.template import Library
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
-from ..backend.views.controller import ALL_VAR, PAGE_VAR
+from ..backend.views.controller import ALL_VAR, PAGE_VAR, SEARCH_VAR
 
 register = Library()
 
@@ -83,4 +83,16 @@ def pagination(view):
         'page_range': page_range,
         'ALL_VAR': ALL_VAR,
         '1': 1,
+    }
+
+
+@register.inclusion_tag('fragments/search_form.html')
+def search_form(view):
+    """
+    Display a search form for searching the list.
+    """
+    return {
+        'view': view,
+        'show_result_count': view.result_count != view.full_result_count,
+        'search_var': SEARCH_VAR
     }

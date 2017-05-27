@@ -42,6 +42,9 @@ class ViewOptions(PartialViewOptions):
     list_max_show_all = 200
     show_full_result_count = True
 
+    # search options
+    search_fields = ()
+
 
 class ControllerOptions(ViewOptions):
     """ Configurable options for registered controllers. """

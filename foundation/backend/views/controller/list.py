@@ -5,12 +5,13 @@ from django.utils.http import urlencode
 
 from ...controller import MultipleObjectMixin
 from .base import ControllerViewMixin
-from .mixins import PaginationMixin
+from .mixins import PaginationMixin, SearchMixin
 
 __all__ = 'ListMixin',
 
 
-class ListMixin(PaginationMixin, MultipleObjectMixin, ControllerViewMixin):
+class ListMixin(PaginationMixin, SearchMixin, MultipleObjectMixin,
+                ControllerViewMixin):
 
     mode = 'list'
 

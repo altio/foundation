@@ -10,6 +10,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.db.models.deletion import Collector
+from django.db.models.sql.constants import QUERY_TERMS
 from django.forms.utils import pretty_name
 from django.http import HttpResponseRedirect, QueryDict
 from django.shortcuts import resolve_url
@@ -79,6 +80,27 @@ def get_project_app_configs():
         app_config = apps.get_app_config(project_app.split('.')[-1])
         if list(get_eligible_models(app_config)):
             yield app_config
+
+
+def lookup_needs_distinct(opts, lookup_path):
+    """
+    Returns True if 'distinct()' should be used to query the given lookup path.
+    """
+    lookup_fields = lookup_path.split('__')
+    # Remove the last item of the lookup path if it is a query term
+    if lookup_fields[-1] in QUERY_TERMS:
+        lookup_fields = lookup_fields[:-1]
+    # Now go through the fields (following all relations) and look for an m2m
+    for field_name in lookup_fields:
+        field = opts.get_field(field_name)
+        if hasattr(field, 'get_path_info'):
+            # This field is a relation, update opts to follow the relation
+            path_info = field.get_path_info()
+            opts = path_info[-1].to_opts
+            if any(path.m2m for path in path_info):
+                # This field is a m2m relation so we know we need to call distinct
+                return True
+    return False
 
 
 def quote(s):
