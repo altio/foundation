@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<form class="form-signin" method="POST">
+  <p class="lead">Please sign in </p>
+    {% csrf_token %}
+    {{ form }}
+  <a href="{% url 'password_reset' %}">Forgot my username or password</a>
+  <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+</form>
+{% endblock %}

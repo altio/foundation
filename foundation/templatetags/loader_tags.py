@@ -116,10 +116,13 @@ class IncludeNode(loader_tags.IncludeNode):
                             app_label = app_config.label
 
                     # by now we do (not) have app_label (and model_name)
-                    template = context.template.engine.get_template(
-                        template_name,
-                        app_label=app_label,
-                        model_name=model_name
+                    template = (
+                        context.template.engine.get_template(
+                            template_name,
+                            app_label=app_label,
+                            model_name=model_name)
+                        if app_label or model_name
+                        else context.template.engine.get_template(template_name)
                     )
                     cache[template_name] = template
             if self.isolated_context:

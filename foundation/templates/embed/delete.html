@@ -1,0 +1,17 @@
+{% extends 'embed/object.html' %}
+{% load i18n %}
+
+{% block embed-body %}
+{% include 'fragments/stacked/delete.html' %}
+{% endblock %}
+
+{% block embed-footer %}
+{% if not perms_lacking %}
+  <div>
+    <input type="hidden" name="post" value="yes" />
+    {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+    {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
+    <button type="submit" class="btn btn-primary">{% trans "Yes, I'm sure" %}</button> | <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+  </div>
+{% endif %}
+{% endblock %}

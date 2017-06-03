@@ -1,0 +1,22 @@
+{% extends "embed/base.html" %}
+{% load i18n %}
+
+{% block embed-header %}
+<h2>
+  {% block embed-title %}
+  {% if is_popup %}
+  {{ view.get_title }}
+  {% endif %}
+  {% endblock %}
+  {% block embed-controls %}
+  {% if is_popup %}
+  &nbsp;<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fa fa-times fa-fw"></i></span></button>
+  &nbsp;<a href="{% mode_url view.mode object|default:None %}"><button type="button" class="close"><span aria-hidden="true"><i class="fa fa-expand fa-fw"></i></span></button></a>
+  {% endif %}
+  {% endblock %}
+</h2>
+{% endblock %}
+
+{% block embed-body %}
+  {% include view.view_template %}
+{% endblock %}

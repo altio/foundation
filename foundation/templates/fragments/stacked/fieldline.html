@@ -1,6 +1,6 @@
 {# expects to have form, fieldset, and fieldline in context #}
 
-<div class="{% block fieldlineclass %}{% endblock %}">
+<div class="{% block fieldlineclass %}{% if fieldline.fields|length_is:'1' and fieldline.errors %} errors{% endif %}{% if not fieldline.has_visible_field %} hidden{% endif %}{% for field in fieldline %}{% if field.name %} field-{{ field.name }}{% endif %}{% endfor %}{% endblock %}">
 {% block beforefieldline %}{% endblock %}
 {% for field in fieldline %}
   {% if not field.is_readonly or not view.edit %}

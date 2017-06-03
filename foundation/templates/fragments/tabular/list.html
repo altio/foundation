@@ -1,6 +1,6 @@
 {% load i18n %}
 
-<fieldset class="module {{ formset.classes }}">
+<fieldset class="module {% block formsetclasses %}{{ formset.classes }}{% endblock %}">
   {{ formset.management_form }}
   {% if formset.errors %}
     <p class="errornote">
@@ -8,7 +8,7 @@
     </p>
     {{ formset.non_form_errors }}
   {% endif %}
-  <table class="{% block tableclasses %}{% endblock %}" {% block tableattrs %}{% endblock %}>
+  <table class="{% block tableclasses %}{% endblock %}" {% block tableattrs %}id="table-{{ formset.prefix }}"{% endblock %}>
     <thead>
       <tr>
         <th class="original"></th>
@@ -37,7 +37,7 @@
 
     <tbody>
     {% for formset_form in formset %}
-      {% include 'fragments/tabular/object.html' with view_controller=formset_form.view_controller %}
+      {% include 'fragments/tabular/object.html' %}
     {% endfor %}
     </tbody>
   </table>

@@ -1,0 +1,5 @@
+{% block embed-before %}{% endblock %}
+<div class="{% block embed-header-class %}{% if is_popup %}modal-header{% endif %}{% endblock %}">{% block embed-header %}{% endblock %}</div>
+<div class="{% block embed-body-class %}{% if is_popup %}modal-body{% endif %}{% endblock %}">{% block embed-body %}{% endblock %}</div>
+<div class="{% block embed-footer-class %}{% if is_popup %}modal-footer{% endif %}{% endblock %}">{% block embed-footer %}{% endblock %}</div>
+{% block embed-after %}{% endblock %}
