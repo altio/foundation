@@ -11,8 +11,11 @@
 {% block bodyclass %}{{ block.super }}{% if is_popup %} popup{% endif %}{% endblock %}
 {% block bodyattr %}{{ block.super }} data-admin-utc-offset="{% now "Z" %}"{% endblock %}
 
-{% block header_element %}
-  {% if not is_popup %}
+{% block body %}
+<!-- Container -->
+<div id="container">
+
+    {% if not is_popup %}
     <!-- Header -->
     <div id="header">
         <div id="branding">
@@ -46,27 +49,22 @@
         {% block nav-global %}{% endblock %}
     </div>
     <!-- END Header -->
-  {% endif %}
-{% endblock header_element %}
+    {% block breadcrumbs %}
+    <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    {% if title %} &rsaquo; {{ title }}{% endif %}
+    </div>
+    {% endblock %}
+    {% endif %}
 
-{% block breadcrumbs %}
-  {% if not is_popup %}
-  <div class="breadcrumbs">
-  <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-  {% if title %} &rsaquo; {{ title }}{% endif %}
-  </div>
-  {% endif %}
-{% endblock %}
+    {% block messages %}
+        {% if messages %}
+        <ul class="messagelist">{% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+        {% endfor %}</ul>
+        {% endif %}
+    {% endblock messages %}
 
-{% block messages %}
-  {% if messages %}
-    <ul class="messagelist">{% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
-    {% endfor %}</ul>
-  {% endif %}
-{% endblock messages %}
-
-{% block content_element %}
     <!-- Content -->
     <div id="content" class="{% block coltype %}colM{% endblock %}">
         {% block pretitle %}{% endblock %}
@@ -79,27 +77,8 @@
         <br class="clear" />
     </div>
     <!-- END Content -->
-{% endblock content_element %}
 
-
-{% block footer %}<div id="footer"></div>{% endblock %}
-
-{% block scripts %}
-{{ block.super }}
-<script type="text/javascript">
-//<![CDATA[
-    window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";
-//]]>
-</script>
-<script src="{% static "admin/js/jquery-migrate-1.2.1.min.js" %}"></script>
-<script type="text/javascript">
-//<![CDATA[
-        (function($) {
-            $(document).ready(function() {
-                $('input[type="submit"]').addClass('btn');
-                $('[title]').tooltip();
-            });
-        }(jQuery));
-//]]>
-</script>
-{% endblock scripts %}
+    {% block footer %}<div id="footer"></div>{% endblock %}
+</div>
+<!-- END Container -->
+{% endblock %}

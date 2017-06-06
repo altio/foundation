@@ -1,0 +1,3 @@
+{% for app, url in available_apps.items %}
+<li><a href="{{ url }}">{{ app.verbose_name | title }}</a></li>
+{% endfor %}

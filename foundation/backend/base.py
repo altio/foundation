@@ -5,16 +5,16 @@ import logging
 
 from collections import OrderedDict
 from django.conf import settings
+from django.conf.urls import url, include
 from django.forms.widgets import MediaDefiningClass
+from django.urls import resolve
 from django.utils import six
 from django.utils.functional import cached_property
 
 from .. import utils
 from .registry import NotRegistered
 from .router import Router
-from .views import TemplateView, AppTemplateView
-from django.conf.urls import url, include
-from django.urls import resolve
+from .views import TemplateView
 
 __all__ = 'Backend', 'backends', 'get_backend'
 
@@ -23,6 +23,9 @@ logger = logging.getLogger(__name__)
 
 class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
+    admin_site = None  # allows for alternate admin site to be provided
+    admin_url_prefix = None  # '' to put on root, 'admin' to emulate normal
+    auth_url_prefix = None  # '' to put on root, 'accounts' to emulate normal
     create_permissions = False
     routes = ()
     site_index_class = TemplateView
@@ -112,7 +115,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 )
 
         # set app_index_class on app to "None" to skip creation
-        app_index_class = getattr(app_config, 'app_index_class', AppTemplateView)
+        app_index_class = getattr(app_config, 'app_index_class', None)
         if app_index_class:
             template_name = getattr(app_config, 'template_name', 'app_index.html')
             app_index = app_index_class.as_view(
@@ -125,8 +128,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
     def get_urlpatterns(self, urlpatterns=None):
         """
         May be linked to ROOT_URLCONF directly or used to extend URLs from an
-        existing urls.py file.  If it is extending patterns, auto-loading
-        of urls.py files is disabled since that should be managed manually.
+        existing urls.py file.
         """
 
         # gets the set of named urlpatterns from this controller's viewsets
@@ -142,15 +144,15 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                                     'url_namespace',
                                     app_config.label)
 
-            urlprefix = getattr(app_config, 'url_prefix', app_config.label)
-            urlprefix = (r'^{}/'.format(urlprefix)
-                         if urlprefix is not None and urlprefix != ''
+            urlprefix = getattr(app_config, 'url_prefix', None)
+            urlprefix = (r'^{}/'.format(urlprefix or app_config.label)
+                         if urlprefix != ''
                          else r'')
             app_urlpatterns = self.get_app_urlpatterns(app_config)
 
-            # attempt to import the module's url patterns
-            append_urls = getattr(app_config, 'append_urls', True)
-            if append_urls:
+            # import the app's url patterns (if present)
+            import_urls = getattr(app_config, 'import_urls', False)
+            if import_urls:
                 try:
                     app_urlpatterns[None].append(
                         url(r'', include(r'{}.urls'.format(app_config.name)))
@@ -184,9 +186,53 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                 )
         urlpatterns = urlpatterns.pop(None, [])
 
+        if self.admin_url_prefix is not None:
+            from django.contrib.admin import site, autodiscover_modules
+            if self.admin_site is None:
+                self.admin_site = site
+            autodiscover_modules(site=self.admin_site)
+            def context_wrapper(func):
+                def each_context(request):
+                    kwargs = func(request)
+                    kwargs.update(self.each_context(request))
+                    return kwargs
+                return each_context
+            self.admin_site.each_context = context_wrapper(self.admin_site.each_context)
+            urlpatterns += [
+                url(r'^{}/'.format(self.admin_url_prefix)
+                    if self.admin_url_prefix
+                    else r'', self.admin_site.urls)
+            ]
+
+        if self.auth_url_prefix is not None:
+            from django.contrib.auth import urls as auth_urls
+            from .views.auth import ToggleSuperuser
+            from functools import partial
+            from .decorators import backend_context
+
+            auth_urlpatterns = []
+            for auth_urlpattern in auth_urls.urlpatterns:
+                if auth_urlpattern.name == 'password_reset':
+                    auth_urlpattern.callback = partial(
+                        auth_urlpattern.callback,
+                        email_template_name='registration/password_reset_email.txt',
+                        html_email_template_name='registration/password_reset_email.html',
+                    )
+                auth_urlpattern.callback = backend_context(auth_urlpattern.callback, backend=self)
+                auth_urlpatterns.append(auth_urlpattern)
+            auth_urlpatterns.append(
+                url(r'^toggle_superuser/$', ToggleSuperuser.as_view(), name='toggle_superuser'),
+            )
+            if self.auth_url_prefix:
+                auth_urlpatterns = [
+                    url(r'^{}/'.format(self.auth_url_prefix), include(auth_urlpatterns)),
+                ]
+            urlpatterns.extend(auth_urlpatterns)
+
+
         return urlpatterns
 
-    @cached_property
+    @property
     def urls(self):
         """
         Shortcut for referencing backend URLs as ROOT_URLCONF
@@ -209,16 +255,16 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             elif user.has_module_perms(app_config.label):
                 is_visible = True
             if is_visible:
+                url_prefix = getattr(app_config, 'url_prefix', None)
+                if url_prefix is None:
+                    url_prefix = app_config.label
                 try:
-                    url = getattr(app_config, 'url_prefix', None)
-                    if url is None:
-                        url = app_config.label
-                    url = ('/' + url + '/') if url else '/'
+                    url = '/{}/'.format(url_prefix)
                     resolve(url)
                 except:
-                    url = None
-
-            available_apps[app_config] = url
+                    pass
+                else:
+                    available_apps[app_config] = url
 
         return available_apps
 
@@ -230,6 +276,8 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
 
         return {
             'backend': self,
+            'has_admin_urls': self.admin_site is not None,
+            'has_auth_urls': self.auth_url_prefix is not None,
             'site_title': self.site_title,
             'available_apps': self.get_available_apps(request),
         }

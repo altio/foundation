@@ -1,4 +1,4 @@
-{% load i18n sekizai_tags %}<!DOCTYPE html>{# admin #}
+{% load i18n %}<!DOCTYPE html>{# admin #}
 {% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}{# admin #}
 {% spaceless %}
 <html class="{% block htmlclass %}{% endblock %}" {% block htmlattr %}
@@ -7,11 +7,17 @@
       {% endblock %}>{# admin #}
 {% endspaceless %}
 <head>{# admin #}
-{% block meta %}{% endblock %}
+{% block meta %}
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{% block meta-description %}{% endblock %}">
+<meta name="author" content="{% block meta-author %}{% endblock %}">
+<meta name="keywords" content="{% block meta-keywords %}{% endblock %}">
+{% endblock %}
 <title>{% block title %}{% endblock %}</title>{# admin #}
 {% block stylesheets %}{{ media.css }}{% endblock %}
 {% block extrastyle %}{% endblock %}{# admin #}
-{% render_block 'css' %}
 {% block extrahead %}{% endblock %}{# admin #}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}{# admin #}
 </head>
@@ -24,15 +30,18 @@
     <header class="{% block headerclass %}{% endblock %}"{% block headerattr %}{% endblock %}>
       {% block header %}
       <div>
-      {% if user.is_staff %}
-        <a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a>
-      {% endif %}
-      {% for app, is_visible in available_apps.items %}
-        {% if is_visible and app.index_url_name %}
-           {% if not forloop.last %}&nbsp;|&nbsp;{% endif %}
-           <a href="{% url app.index_url_name %}">{{ app.label | title }}</a>
+        {% if has_admin_urls or has_auth_urls %}
+        <p>Auth/Admin</p>
+        <ul>
+          {% include 'fragments/userlinks.html' %}
+        </ul>
         {% endif %}
-      {% endfor %}
+        {% if available_apps %}
+        <p>Apps</p>
+        <ul>
+          {% include 'fragments/apps.html' %}
+        </ul>
+        {% endif %}
       </div>
       {% endblock %}
     </header>
@@ -70,7 +79,6 @@
 {% block modals %}{% endblock %}
 
 {% block scripts %}{{ media.js }}{% endblock %}
-{% render_block 'js' %}
 
 </body>
 

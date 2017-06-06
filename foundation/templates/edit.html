@@ -3,7 +3,7 @@
 
 {% block form-bottom %}
   <p>
-    <button type="submit">{% trans 'Save ' %}{{ view.verbose_name|title }}</button>
+    <button type="submit">{% trans 'Save ' %}{{ form.view_controller.verbose_name|title }}</button>
     &nbsp;<a href="javascript:history.back()">{% trans 'Cancel' %}</a>
   </p>
 {% endblock %}
