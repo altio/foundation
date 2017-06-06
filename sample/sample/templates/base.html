@@ -32,7 +32,7 @@
                     <ul class="dropdown-menu">
                       {% if user.is_superuser %}
                         <li><a href="{% url 'toggle_superuser' %}">
-                          {% if request.session.act_as_superuser %}
+                          {% if request.session.acting_as_superuser %}
                             {% trans 'Remove superuser' %}
                           {% else %}
                             {% trans 'Elevate to superuser' %}
@@ -99,16 +99,14 @@
             </form>
             <ul class="nav navbar-nav navbar-right">
                 {% block app_selector %}
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">apps <span class="caret"></span></a>
-                    <ul class="dropdown-menu">
-                      {% for app, app_index in available_apps.items %}
-                        {% if app_index %}
-                        <li><a href="{{ app_index }}">{{ app.label | title }}</a></li>
-                        {% endif %}
-                      {% endfor %}
-                    </ul>
-                </li>
+                  {% if available_apps %}
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">apps <span class="caret"></span></a>
+                      <ul class="dropdown-menu">
+                        {% include 'fragments/apps.html' %}
+                      </ul>
+                    </li>
+                  {% endif %}
                 {% endblock app_selector %}
             </ul>
             {% endblock header-navbar %}
@@ -149,25 +147,19 @@
 </div>
 {% endblock %}
 
-{% block modals %}
-<!-- Modal -->
-<div class="modal fade" id="modal-container" tabindex="-1" role="dialog" aria-labelledby="modal-container">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content"></div>
-  </div>
-</div>
-{% endblock %}
-
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
+{% comment %}
 //<![CDATA[
-        (function($) {
-            $(document).ready(function() {
-                $('input[type="submit"]').addClass('btn');
-                $('[title]').tooltip();
-            });
-        }(jQuery));
+  (function($) {
+      $(document).ready(function() {
+          $('input[type="submit"]').addClass('btn');
+          $('[title]').tooltip();
+      });
+  }(jQuery));
 //]]>
+{% endcomment %}
+
 </script>
 {% endblock scripts %}

@@ -14,6 +14,8 @@ class SiteBackend(Backend):
 
     routes = ('ajax', 'api', 'embed')
     site_index_class = SiteIndexView
+    auth_url_prefix = ''
+    admin_url_prefix = 'admin'
     create_permissions = True
 
     class Media:
@@ -27,8 +29,9 @@ class SiteBackend(Backend):
             ),
         }
         js = [
-            'js/jquery-1.11.2.min.js',
+            'js/jquery-2.2.4.min.js',
             'pkg/bootstrap/js/bootstrap.min.js',
+            'js/modals.js',
         ]
 
     def each_context(self, request):

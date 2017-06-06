@@ -13,9 +13,9 @@ class ViewMixin(object):
 class APIFormController(forms.FormController):
 
     viewsets = {
-        None: forms.FormViewSet,
+        None: forms.PageViewSet,
         'api': rest.APIViewSet,
-        'embed': forms.FormViewSet,
+        'embed': forms.EmbedViewSet,
     }
 
     view_mixin_class = ViewMixin

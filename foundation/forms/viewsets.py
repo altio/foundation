@@ -6,10 +6,10 @@ from django.conf.urls import url
 from ..backend import ControllerViewSet
 from . import views
 
-__all__ = 'FormViewSet',
+__all__ = 'PageViewSet', 'EmbedViewSet'
 
 
-class FormViewSet(ControllerViewSet):
+class BaseFormViewSet(ControllerViewSet):
 
     view_child_class = views.base.FormChild
     view_parent_class = views.base.FormParent
@@ -52,3 +52,29 @@ class FormViewSet(ControllerViewSet):
             ))
 
         return urlpatterns
+
+
+class PageMixin(object):
+
+    def get_context_data(self, **kwargs):
+        context = super(PageMixin, self).get_context_data(**kwargs)
+        context['is_embed'] = False
+        return context
+
+
+class PageViewSet(BaseFormViewSet):
+
+    view_class_mixin = PageMixin
+
+
+class EmbedMixin(object):
+
+    def get_context_data(self, **kwargs):
+        context = super(EmbedMixin, self).get_context_data(**kwargs)
+        context['is_embed'] = True
+        return context
+
+
+class EmbedViewSet(BaseFormViewSet):
+
+    view_class_mixin = EmbedMixin

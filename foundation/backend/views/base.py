@@ -101,15 +101,21 @@ class BackendTemplateMixin(BackendMixin, base.TemplateResponseMixin,
                 raise TemplateDoesNotExist(
                     'The view must be provided with a "name" or "template_name"'
                 )
-            self._template_name = '{}{}.html'.format(
-                '{}/'.format(self.route) if self.route else '',
-                self.name,
-            )
+            self._template_name = '{}.html'.format(self.name)
         return self._template_name
 
     @template_name.setter
     def template_name(self, val):
         self._template_name = val
+
+    def get_template_names(self):
+        template_names = super(BackendTemplateMixin, self).get_template_names()
+        if self.route:
+            template_names = [
+                '{}/{}'.format(self.route, template_name)
+                for template_name in template_names
+            ] + template_names
+        return template_names
 
 
 class TemplateView(BackendTemplateMixin, base.TemplateView):

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from .. import backend
 from . import models
 from .views.base import FormChild, FormParent
-from .viewsets import FormViewSet
+from .viewsets import PageViewSet
 from django.utils.functional import cached_property
 
 __all__ = 'FormController', 'FormInline'
@@ -43,7 +43,7 @@ class FormController(FormOptions, backend.Controller):
     view_child_class = FormChild
     view_parent_class = FormParent
     viewsets = {
-        None: FormViewSet,
+        None: PageViewSet,
     }
 
 
@@ -67,4 +67,3 @@ class FormInline(FormOptions, FormChild):
                 return getattr(model._meta, name)
             except AttributeError:
                 raise e
-
