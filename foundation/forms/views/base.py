@@ -10,6 +10,11 @@ from django.urls.exceptions import NoReverseMatch
 
 from ...backend import views
 from .components import FormSetMixin
+from ...backend.views.controller.mixins import variables
+
+IS_POPUP_VAR = '_popup'
+
+IGNORED_PARAMS = variables.IGNORED_PARAMS + (IS_POPUP_VAR, )
 
 
 class TitleMixin(object):
@@ -79,6 +84,14 @@ class FormParent(BreadcrumbMixin, views.ViewParent):
 
 class ControllerTemplateMixin(BreadcrumbMixin, views.ControllerViewMixin, views.BackendTemplateMixin):
 
+    def handle_common(self, handler, request, *args, **kwargs):
+        handler = super(ControllerTemplateMixin, self).handle_common(handler, request, *args, **kwargs)
+
+        self.is_popup = (IS_POPUP_VAR in self.request.POST or
+                         IS_POPUP_VAR in self.request.GET)
+
+        return handler
+
     def get_breadcrumbs(self):
 
         # start with the app index up top
@@ -105,7 +118,10 @@ class ControllerTemplateMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
         return breadcrumbs
 
     def get_context_data(self, **kwargs):
-        kwargs['view_controller'] = self
+        kwargs.update({
+            'view_controller': self,
+            'is_popup_var': IS_POPUP_VAR,
+        })
         return super(ControllerTemplateMixin, self).get_context_data(**kwargs)
 
     @property

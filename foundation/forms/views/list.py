@@ -20,6 +20,9 @@ class ListView(FormSetMixin, ControllerTemplateMixin, ListMixin, list.ListView):
             handler, request, *args, **kwargs
         )
 
+        if self.is_popup:
+            self.list_editable = ()
+
         parent_obj = (self.view_parent.get_object()
                       if self.view_parent
                       else None)
