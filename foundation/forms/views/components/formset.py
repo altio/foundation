@@ -129,3 +129,6 @@ class FormSetMixin(BaseModelFormMixin):
         formset_kwargs = self.get_formset_kwargs(
             formset_class=FormSet, obj=obj, queryset=queryset, **kwargs)
         return FormSet(**formset_kwargs)
+
+    def errors(self):
+        return self.formset.errors

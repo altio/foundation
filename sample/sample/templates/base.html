@@ -116,41 +116,9 @@
 <!-- END Header -->
 {% endblock %}
 
-{% block breadcrumbs %}
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-sm-12">
-      <ol class="breadcrumb">
-        <li><a href="/">{% trans "Home" %}</a></li>
-        {% for label, url in view.get_breadcrumbs %}
-          <li{% if forloop.last %} class="active"{% endif %}>
-            {% if url %}<a href="{{ url }}">{% endif %}
-            {% trans label|title %}
-            {% if url %}</a>{% endif %}
-          </li>
-        {% endfor %}
-      </ol>
-    </div>
-  </div>
-</div>
-{% endblock breadcrumbs %}
-
-{% block containers %}
-<div class="container-fluid">
-  <div class="row">
-     <div class="col-sm-12">
-     {% block content %}
-     {{ block.super }}{# content #}
-     {% endblock content %}
-     </div>
-  </div>
-</div>
-{% endblock %}
-
 {% block scripts %}
 {{ block.super }}
 <script type="text/javascript">
-{% comment %}
 //<![CDATA[
   (function($) {
       $(document).ready(function() {
@@ -159,7 +127,5 @@
       });
   }(jQuery));
 //]]>
-{% endcomment %}
-
 </script>
 {% endblock scripts %}

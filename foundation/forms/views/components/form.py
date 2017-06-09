@@ -7,6 +7,7 @@ from collections import OrderedDict
 
 from django.db import models
 from django.core.exceptions import FieldError
+from django.forms.utils import ErrorList
 from django.forms.widgets import CheckboxSelectMultiple, SelectMultiple
 from django.utils.translation import string_concat, ugettext as _
 
@@ -361,11 +362,13 @@ class BaseModelFormMixin(object):
 
         if db_field.name in self.raw_id_fields:
             kwargs['widget'] = widgets.ManyToManyRawIdWidget(db_field.remote_field, self.admin_site, using=db)
+        """
         elif db_field.name in (list(self.filter_vertical) + list(self.filter_horizontal)):
             kwargs['widget'] = widgets.FilteredSelectMultiple(
                 db_field.verbose_name,
                 db_field.name in self.filter_vertical
             )
+        """
 
         if 'queryset' not in kwargs:
             queryset = self.get_field_queryset(db, db_field)
@@ -378,3 +381,11 @@ class BaseModelFormMixin(object):
             help_text = form_field.help_text
             form_field.help_text = string_concat(help_text, ' ', msg) if help_text else msg
         return form_field
+
+    def errors(self):
+        errors = ErrorList(self.form.errors)
+        for inline_formset in self.inline_formsets.values():
+            errors.extend(inline_formset.non_form_errors())
+            for inline_formset_errors in inline_formset.errors:
+                errors.extend(inline_formset_errors.values())
+        return errors

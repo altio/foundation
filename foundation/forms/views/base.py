@@ -125,7 +125,11 @@ class ControllerTemplateMixin(BreadcrumbMixin, views.ControllerViewMixin, views.
         return super(ControllerTemplateMixin, self).get_context_data(**kwargs)
 
     @property
-    def view_template(self):
+    def embed_template(self):
+        return os.path.join('embed', self.template_name)
+
+    @property
+    def form_template(self):
         return os.path.join(
             self.template_paths[self.list_style
                                 if self.mode=='list'

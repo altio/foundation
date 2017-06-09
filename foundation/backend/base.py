@@ -134,7 +134,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         # gets the set of named urlpatterns from this controller's viewsets
         urlpatterns = super(Backend, self).get_urlpatterns(self)
 
-        # URL auto-loader traverses all installed apps
+        # URL auto-loader traverses all project apps
         for app_config in utils.get_project_app_configs():
 
             # presume app configs are private

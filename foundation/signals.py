@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from django.apps import apps as global_apps
 from django.conf import settings
 from django.contrib.auth.management import create_permissions as auth_perms
@@ -59,7 +61,7 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
                     else:
                         name = p.name
                     if name in patterns:
-                        raise ValueError('"{}" is duplicate')
+                        raise ValueError('"{}" is duplicate'.format(name))
 
                     # we are presuming only CBV... could handle FBV one day
                     view_class = p.callback.view_class if hasattr(p.callback, 'view_class') else None
@@ -98,17 +100,23 @@ def create_permissions(app_config, verbosity=2, interactive=True, using=DEFAULT_
                     _namespace = '{0}:{1}'.format(namespace, p.namespace)
                 else:
                     _namespace = (p.namespace or namespace)
+                # TODO: need to do this better... problem is that:
+                # a) we do not want admin permissions added
+                # b) apparently the namespace duplicates
+                # c) this is not tolerant of no namespace
+                if not _namespace or _namespace == 'admin':
+                    continue
                 if isinstance(p, LocaleRegexURLResolver):
                     for langauge in settings.LANGUAGES:
                         with translation.override(langauge[0]):
                             if _namespace in resolvers:
-                                raise ValueError('"{}" is duplicate')
+                                raise ValueError('"{}" is duplicate'.format(_namespace))
                             resolvers[_namespace] = post_process_urlpatterns(
                                 url_patterns, base + p.regex.pattern,
                                 namespace=_namespace)
                 else:
                     if _namespace in resolvers:
-                        raise ValueError('"{}" is duplicate')
+                        raise ValueError('"{}" is duplicate'.format(_namespace))
                     resolvers[_namespace] = post_process_urlpatterns(
                         url_patterns, base + p.regex.pattern,
                         namespace=_namespace)

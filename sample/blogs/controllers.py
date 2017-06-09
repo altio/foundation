@@ -4,10 +4,24 @@ from foundation.backend import register
 from . import models
 
 
-class ViewMixin(object):
+class FormViewMixin(object):
 
     """ Add overrides to view code here, or replace the view classes in the
     dictionary on the controller. """
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        formfield = super(FormViewMixin, self).formfield_for_dbfield(db_field,
+                                                                     **kwargs)
+        # if formfield:  # concrete inheritance
+        widget = formfield.widget
+
+        # do not apply to templated widgets
+        # if not isinstance(widget, forms.widgets.WidgetTemplateMixin):
+        widget.attrs['class'] = ' '.join((
+            widget.attrs.get('class', ''), 'form-control'
+        ))
+
+        return formfield
 
 
 class APIFormController(forms.FormController):
@@ -18,7 +32,7 @@ class APIFormController(forms.FormController):
         'embed': forms.EmbedViewSet,
     }
 
-    view_mixin_class = ViewMixin
+    view_mixin_class = FormViewMixin
 
 
 class PostController(APIFormController):

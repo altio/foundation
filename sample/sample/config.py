@@ -21,17 +21,9 @@ class SiteBackend(Backend):
     class Media:
         css = {
             'all': (
-                'pkg/bootstrap/css/bootstrap.min.css',
-                'pkg/bootstrap/css/bootstrap-theme.min.css',
-                'pkg/fa/css/font-awesome.css',
-                'css/home.css',
-                'css/overrides.css',
             ),
         }
         js = [
-            'js/jquery-2.2.4.min.js',
-            'pkg/bootstrap/js/bootstrap.min.js',
-            'js/modals.js',
         ]
 
     def each_context(self, request):
