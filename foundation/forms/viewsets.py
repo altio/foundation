@@ -22,18 +22,24 @@ class BaseFormViewSet(ControllerViewSet):
         ('display', views.DisplayView),
     )
 
+    list_names = ('list', 'add')
+
     def get_urlpatterns(self):
         model_lookup = self.router.controller.model_lookup
         urlpatterns = []
 
         # reserved modes list, add, and display need special treatment
-        if 'list' in self:
-            urlpatterns.append(url(r'^$', self['list'], name='list'))
-        if 'add' in self:
-            urlpatterns.append(url(r'^add$', self['add'], name='add'))
+        for name in self.list_names:
+            if name in self:
+                mode = self[name].view_class.mode
+                urlpatterns.append(url(
+                    r'^{}$'.format('' if mode == 'list' else name),
+                    self[name],
+                    name=name,
+                ))
 
         # attach all single-object manipulation modes
-        for mode in set(self) - set(['list', 'add', 'display']):
+        for mode in set(self) - set(('display',) + self.list_names):
             urlpatterns.append(url(
                 r'^(?P<{lookup}>[-\w]+)/{mode}$'.format(
                     lookup=model_lookup,

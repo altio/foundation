@@ -84,6 +84,7 @@ function submitEmbeddedForm(event) {
         displayObject(form);
       }
     }
+    refreshPage();
   }).fail(function(jqXHR, textStatus, errorThrown) {
     form.innerHTML = '<p>Sorry there has been an error.  Please try back later.</p>';
   });
