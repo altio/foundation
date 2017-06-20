@@ -21,14 +21,6 @@
       {% endif %}
     {% endblock %}
     {% endcomment %}
-    <h3>{{ formset.view_controller.get_title|title }}</h3>
-    <form id="changelist-form" method="post"{% if formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
-    {% if formset.queryset %}
-      {% include formset.view_controller.view_template with view_controller=formset.view_controller %}
-    {% else %}
-      {% include 'fragments/empty_list.html' %}
-    {% endif %}{# formset.queryset #}
-    {% block pagination %}{% pagination view_controller %}{% endblock %}
-    </form>
+    {% include view.embed_template %}
   </div>
 {% endblock %}

@@ -14,8 +14,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'Django>=1.10,<1.11',
-        'django-sekizai>=0.10',
+        'Django>=1.10,<1.12',
     ],
     license='MIT License',
     description='A generic website backend implemented in Django using ' \
@@ -29,6 +28,7 @@ setup(
         'Environment :: Web Environment',
         'Framework :: Django',
         'Framework :: Django :: 1.10',
+        'Framework :: Django :: 1.11',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',

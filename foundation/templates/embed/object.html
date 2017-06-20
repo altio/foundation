@@ -1,22 +1,20 @@
 {% extends "embed/base.html" %}
 {% load i18n %}
 
-{% block embed-header %}
-<h2>
-  {% block embed-title %}
-  {% if is_popup %}
-  {{ view.get_title }}
-  {% endif %}
-  {% endblock %}
-  {% block embed-controls %}
-  {% if is_popup %}
-  &nbsp;<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fa fa-times fa-fw"></i></span></button>
-  &nbsp;<a href="{% mode_url view.mode object|default:None %}"><button type="button" class="close"><span aria-hidden="true"><i class="fa fa-expand fa-fw"></i></span></button></a>
-  {% endif %}
-  {% endblock %}
-</h2>
-{% endblock %}
-
-{% block embed-body %}
-  {% include view.view_template %}
+{% block formclasses %}{% if form.errors %} form-errors{% endif %}{% endblock %}
+{% block content-header %}
+  {% csrf_token %}
+  <h2>
+    {% block content-controls %}{# controls first renders better for modal #}
+      {% if view.is_popup %}
+        {% if not view.is_embed %}
+          &nbsp;<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true"><i class="fa fa-times fa-fw"></i></span></button>
+        {% endif %}
+        &nbsp;<a href="{% mode_url view.mode object|default:None %}"><button type="button" class="close"><span aria-hidden="true"><i class="fa fa-expand fa-fw"></i></span></button></a>
+      {% endif %}
+    {% endblock %}
+    {% block content-title %}
+      <span class="modal-title">{{ view.get_title }}</span>
+    {% endblock %}
+  </h2>
 {% endblock %}

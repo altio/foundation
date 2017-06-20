@@ -1,5 +1,19 @@
-{% block embed-before %}{% endblock %}
-<div class="{% block embed-header-class %}{% if is_popup %}modal-header{% endif %}{% endblock %}">{% block embed-header %}{% endblock %}</div>
-<div class="{% block embed-body-class %}{% if is_popup %}modal-body{% endif %}{% endblock %}">{% block embed-body %}{% endblock %}</div>
-<div class="{% block embed-footer-class %}{% if is_popup %}modal-footer{% endif %}{% endblock %}">{% block embed-footer %}{% endblock %}</div>
-{% block embed-after %}{% endblock %}
+{% extends 'layout.html' %}
+{# expects view to be present #}
+{% block content-element %}
+  <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% spaceless %}
+        id="{% block form-id %}{{ view.model_name }}_form{% endblock %}"
+        class="{% block formclasses %}{% endblock %}{% if view.errors %} form-errors{% endif %}"
+        action="{% mode_url view.mode object|default:None route='embed' %}{% if view.is_popup %}?{{ is_popup_var }}{% endif %}"
+        method="post" novalidate"{% endspaceless %}>
+    <div class="{% block content-header-class %}{% if view.is_popup %}modal-header{% endif %}{% endblock %}">{% block content-header %}
+        {% csrf_token %}
+        {% block content-title %}<h3>{{ view.get_title|title }}</h3>{% endblock %}
+    {% endblock %}</div>
+    <div class="{% block content-body-class %}{% if view.is_popup %}modal-body{% endif %}{% endblock %}">{% block content-body %}
+      {% include view.form_template %}
+    {% endblock %}</div>
+    <div class="{% block content-footer-class %}{% if view.is_popup %}modal-footer{% endif %}{% endblock %}">{% block content-footer %}
+    {% endblock %}</div>
+  </form>
+{% endblock %}

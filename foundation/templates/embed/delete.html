@@ -1,11 +1,7 @@
 {% extends 'embed/object.html' %}
 {% load i18n %}
 
-{% block embed-body %}
-{% include 'fragments/stacked/delete.html' %}
-{% endblock %}
-
-{% block embed-footer %}
+{% block content-footer %}
 {% if not perms_lacking %}
   <div>
     <input type="hidden" name="post" value="yes" />
@@ -14,4 +10,5 @@
     <button type="submit" class="btn btn-primary">{% trans "Yes, I'm sure" %}</button> | <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
   </div>
 {% endif %}
+{{ block.super }}
 {% endblock %}

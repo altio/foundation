@@ -1,1 +1,20 @@
+{# expects formset to be present #}
 {% extends "embed/base.html" %}
+{% load i18n list %}
+
+{% block content-title %}{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+  {% block pagination %}{% pagination view_controller %}{% endblock %}
+{% endblock %}
+
+{% block form-id %}{{ block.super }}set{% endblock %}
+{% block formclasses %} formset{% endblock %}
+
+{% block content-footer %}
+  {% if view.edit and view.formset and view.result_count %}
+  <input type="submit" name="_save" class="default" value="{% trans 'Save' %}"/>
+  {% endif %}
+{{ block.super }}
+{% endblock %}

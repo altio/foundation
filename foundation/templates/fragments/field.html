@@ -2,16 +2,18 @@
 
 {% block field %}
 {% if field.form.is_readonly or field.is_readonly or not field.form.view_controller.view.edit %}
-  {% if field.field.widget.display_template %}
-    {% include field.field.widget.display_template %}
+  {% if field.field.widget.template_name %}
+    {% include field.field.widget.template_name %}
   {% elif field.attr.view_controller %}{# inline formset #}
-    {% include field.attr.view_controller.inline_template with formset=field.value %}
+    {% include field.attr.view_controller.inline_template with formset=field.value is_inline=True %}
   {% else %}
     {{ field.contents|default:'unknown' }}
   {% endif %}
 {% else %}
-  {% if field.field.widget.edit_template %}
-    {% include field.field.widget.edit_template %}
+  {% if field.field.widget.template_name %}
+    {% include field.field.widget.template_name %}
+  {% elif field.attr.view_controller %}{# inline formset #}
+    {% include field.attr.view_controller.inline_template with formset=field.value is_inline=True %}
   {% else %}
     {{ field }}
   {% endif %}

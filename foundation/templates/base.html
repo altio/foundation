@@ -1,11 +1,10 @@
-{% load i18n %}<!DOCTYPE html>{# admin #}
+{% extends 'layout.html' %}{% load i18n static %}{% block elements-before %}<!DOCTYPE html>{# admin #}
 {% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}{# admin #}
-{% spaceless %}
-<html class="{% block htmlclass %}{% endblock %}" {% block htmlattr %}
+<html class="{% block htmlclass %}{% endblock %}" {% block htmlattr %}{% spaceless %}
         lang="{{ LANGUAGE_CODE|default:"en-us" }}"
         {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}
-      {% endblock %}>{# admin #}
-{% endspaceless %}
+      {% endspaceless %}{% endblock %}>{# admin #}
+
 <head>{# admin #}
 {% block meta %}
 <meta charset="utf-8">
@@ -16,7 +15,14 @@
 <meta name="keywords" content="{% block meta-keywords %}{% endblock %}">
 {% endblock %}
 <title>{% block title %}{% endblock %}</title>{# admin #}
-{% block stylesheets %}{{ media.css }}{% endblock %}
+{% block stylesheets %}
+<link rel="stylesheet" type="text/css" href="{% static 'pkg/bootstrap/css/bootstrap.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'pkg/bootstrap/css/bootstrap-theme.min.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'pkg/fa/css/font-awesome.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/home.css' %}" />
+<link rel="stylesheet" type="text/css" href="{% static 'css/overrides.css' %}" />
+{% endblock %}
+{{ media.css }}
 {% block extrastyle %}{% endblock %}{# admin #}
 {% block extrahead %}{% endblock %}{# admin #}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}{# admin #}
@@ -24,62 +30,82 @@
 
 <body class="{% block bodyclass %}{% endblock %}"{% block bodyattr %}{% endblock %}>{# admin #}
 
-  {% block body %}
+{% block header-element %}<header class="{% block headerclass %}{% endblock %}"{% block headerattr %}{% endblock %}>{% block header %}
+  <div>
+    {% if has_admin_urls or has_auth_urls %}
+    <p>Auth/Admin</p>
+    <ul>
+      {% include 'fragments/userlinks.html' %}
+    </ul>
+    {% endif %}
+    {% if available_apps %}
+    <p>Apps</p>
+    <ul>
+      {% include 'fragments/apps.html' %}
+    </ul>
+    {% endif %}
+  </div>{% endblock header %}
+</header>{% endblock header-element %}
 
-    {% block header_element %}
-    <header class="{% block headerclass %}{% endblock %}"{% block headerattr %}{% endblock %}>
-      {% block header %}
-      <div>
-        {% if has_admin_urls or has_auth_urls %}
-        <p>Auth/Admin</p>
-        <ul>
-          {% include 'fragments/userlinks.html' %}
-        </ul>
-        {% endif %}
-        {% if available_apps %}
-        <p>Apps</p>
-        <ul>
-          {% include 'fragments/apps.html' %}
-        </ul>
-        {% endif %}
-      </div>
-      {% endblock %}
-    </header>
-    {% endblock header_element %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  {% include 'fragments/breadcrumbs.html' %}
+</div>
+{% endblock breadcrumbs %}
 
-    {% block breadcrumbs %}
-    <div class="breadcrumbs">
-      <a href="/">{% trans "Home" %}</a>
-      {% for label, url in view.get_breadcrumbs %}
-        &nbsp;&rsaquo;&nbsp;
-        {% if url %}<a href="{{ url }}">{% endif %}
-        {{ label | title }}
-        {% if url %}</a>{% endif %}
-      {% endfor %}
+{% block containers-before %}
+{% block messages %}{% endblock %}{# admin #}
+{% endblock %}
+
+{% endblock elements-before %}{% block content-element %}
+<section class="{% block contentclass %}{% endblock %}"{% block contentattr %}{% endblock %}>
+  <div class="container-fluid">
+    <div class="row">
+       <div class="col-sm-12">
+       {% block content %}
+       {{ block.super }}{# content #}
+       {% endblock content %}
+       </div>
     </div>
-    {% endblock breadcrumbs %}
+  </div>
+</section>
+{% endblock content-element %}{% block elements-after %}
 
-    {% block containers %}
-      {% block messages %}{% endblock %}{# admin #}
-      {% block content_element %}
-      <section class="{% block contentclass %}{% endblock %}"{% block contentattr %}{% endblock %}>
-        {% block content %}{% endblock %}
-      </section>
-      {% endblock content_element %}
-    {% endblock containers %}
+{% block containers-after %}{% endblock %}
 
-    {% block footer_element %}
-    <footer class="{% block footerclass %}{% endblock %}"{% block footerattr %}{% endblock %}>
-      {% block footer %}{% endblock %}
-    </footer>
-    {% endblock footer_element %}
+{% block footer-element %}
+<footer class="{% block footerclass %}{% endblock %}"{% block footerattr %}{% endblock %}>
+  {% block footer %}{% endblock %}
+</footer>
+{% endblock %}
 
-  {% endblock body %}
+<!-- modal containers -->
+{% block modals %}
+<div class="modal fade" id="modal-container" tabindex="-1" role="dialog" aria-labelledby="modal-container">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content"></div>
+  </div>
+</div>
+{% endblock %}
 
-{% block modals %}{% endblock %}
+<!-- vendor scripts and dependencies -->
+{% block scripts %}{# vendor scripts #}
+<script type="text/javascript" src="{% static 'js/jquery-2.2.4.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'pkg/bootstrap/js/bootstrap.min.js' %}"></script>
+{% endblock %}
 
-{% block scripts %}{{ media.js }}{% endblock %}
+<!-- page scripts -->
+{{ media.js }}
+{% block extrascripts %}{# deferred-execution template-stacked scripts #}
+<script type="text/javascript" src="{% static 'js/ahah.js' %}"></script>
+{% endblock %}
+
+<!-- inline scripts -->
+<script type="text/javascript">{% block inlinescripts %}
+{% include 'base.js' %}
+{% endblock %}</script>
 
 </body>
 
 </html>
+{% endblock elements-after %}

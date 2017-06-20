@@ -44,7 +44,6 @@ INSTALLED_APPS = PROJECT_APPS + [
     'django.contrib.messages',
     'django.contrib.sites',  # needed by foundation
     'django.contrib.staticfiles',
-    'sekizai',
 ]
 
 SITE_ID = 1  # needed by foundation
@@ -73,7 +72,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'sekizai.context_processors.sekizai',
             ],
             'loaders': [
                 'foundation.template.loaders.app_directories.Loader',
