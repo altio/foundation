@@ -1,0 +1,85 @@
+{% load i18n %}<!DOCTYPE html>{# admin #}
+{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}{# admin #}
+{% spaceless %}
+<html class="{% block htmlclass %}{% endblock %}" {% block htmlattr %}
+        lang="{{ LANGUAGE_CODE|default:"en-us" }}"
+        {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}
+      {% endblock %}>{# admin #}
+{% endspaceless %}
+<head>{# admin #}
+{% block meta %}
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{% block meta-description %}{% endblock %}">
+<meta name="author" content="{% block meta-author %}{% endblock %}">
+<meta name="keywords" content="{% block meta-keywords %}{% endblock %}">
+{% endblock %}
+<title>{% block title %}{% endblock %}</title>{# admin #}
+{% block stylesheets %}{{ media.css }}{% endblock %}
+{% block extrastyle %}{% endblock %}{# admin #}
+{% block extrahead %}{% endblock %}{# admin #}
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}{# admin #}
+</head>
+
+<body class="{% block bodyclass %}{% endblock %}"{% block bodyattr %}{% endblock %}>{# admin #}
+
+  {% block body %}
+
+    {% block header_element %}
+    <header class="{% block headerclass %}{% endblock %}"{% block headerattr %}{% endblock %}>
+      {% block header %}
+      <div>
+        {% if has_admin_urls or has_auth_urls %}
+        <p>Auth/Admin</p>
+        <ul>
+          {% include 'fragments/userlinks.html' %}
+        </ul>
+        {% endif %}
+        {% if available_apps %}
+        <p>Apps</p>
+        <ul>
+          {% include 'fragments/apps.html' %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endblock %}
+    </header>
+    {% endblock header_element %}
+
+    {% block breadcrumbs %}
+    <div class="breadcrumbs">
+      <a href="/">{% trans "Home" %}</a>
+      {% for label, url in view.get_breadcrumbs %}
+        &nbsp;&rsaquo;&nbsp;
+        {% if url %}<a href="{{ url }}">{% endif %}
+        {{ label | title }}
+        {% if url %}</a>{% endif %}
+      {% endfor %}
+    </div>
+    {% endblock breadcrumbs %}
+
+    {% block containers %}
+      {% block messages %}{% endblock %}{# admin #}
+      {% block content_element %}
+      <section class="{% block contentclass %}{% endblock %}"{% block contentattr %}{% endblock %}>
+        {% block content %}{% endblock %}
+      </section>
+      {% endblock content_element %}
+    {% endblock containers %}
+
+    {% block footer_element %}
+    <footer class="{% block footerclass %}{% endblock %}"{% block footerattr %}{% endblock %}>
+      {% block footer %}{% endblock %}
+    </footer>
+    {% endblock footer_element %}
+
+  {% endblock body %}
+
+{% block modals %}{% endblock %}
+
+{% block scripts %}{{ media.js }}{% endblock %}
+
+</body>
+
+</html>

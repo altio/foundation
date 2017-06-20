@@ -1,0 +1,5 @@
+{% load i18n %}
+<h2>
+  Sorry, nothing here!
+  {% if view.has_add_permission %}<a href="{{ view.get_add_url }}" class="btn btn-default btn-sm">{% trans 'Add ' %}{{ formset.opts.verbose_name|title }}</a>{% endif %}
+</h2>

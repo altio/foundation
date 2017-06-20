@@ -1,0 +1,13 @@
+{% load i18n admin_urls static %}
+<div class="js-inline-admin-formset inline-group"
+     id="{{ formset.prefix }}-group"
+     data-inline-type="stacked"
+     data-inline-formset="{{ formset.inline_formset_data }}">
+  <fieldset class="module {{ formset.classes }}">
+    {{ formset.management_form }}
+    {{ formset.non_form_errors }}
+    {% for form in formset %}
+      {% include 'fragments/stacked/object.html' with view_controller=form.view_controller %}
+    {% endfor %}
+  </fieldset>
+</div>

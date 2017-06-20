@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block content %}
+<h3>{{ app_name }}</h3>
+<p>
+  <ul>
+    {% for controller in app_controllers %}
+    <li><a href="{{ controller.get_index_url }}">{{ controller.verbose_name_plural | title }}</a></li>
+    {% endfor %}
+  </ul>
+</p>
+{% endblock %}

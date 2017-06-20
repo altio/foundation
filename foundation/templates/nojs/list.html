@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n static list %}
+
+{% block bodyclass %}{{ block.super }} app-{{ view.app_label }} model-{{ view.model_name }} change-list{% endblock %}
+
+{% block coltype %}flex{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="module{% if cl.has_filters %} filtered{% endif %}" id="changelist">
+    {% block search %}{% search_form view %}{% endblock %}
+    {% comment %}
+    {% block date_hierarchy %}{% date_hierarchy cl %}{% endblock %}
+
+    {% block filters %}
+      {% if cl.has_filters %}
+        <div id="changelist-filter">
+          <h2>{% trans 'Filter' %}</h2>
+          {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+        </div>
+      {% endif %}
+    {% endblock %}
+    {% endcomment %}
+    <h3>{{ formset.view_controller.get_title|title }}</h3>
+    <form id="changelist-form" method="post"{% if formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+    {% if formset.queryset %}
+      {% include formset.view_controller.view_template with view_controller=formset.view_controller %}
+    {% else %}
+      {% include 'fragments/empty_list.html' %}
+    {% endif %}{# formset.queryset #}
+    {% block pagination %}{% pagination view_controller %}{% endblock %}
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block nav-global %}{% endblock %}
+{% block nav %}{% endblock %}
+{% block navbar %}{% endblock %}
+{% block login-controls %}{% endblock %}
+{% block modals %}{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <form class="form-signin" action="{% url 'login' %}?next={{request.path}}" method="post" id="login-form">{% csrf_token %}
+    {% blocktrans %}<h2>Login</h2>{% endblocktrans %}
+    {% include "registration/_login.html" %}
+    <button type="submit" class="btn btn-primary">{% trans 'Log in' %}</button>&nbsp;
+    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+  </form>
+</div>
+{% endblock %}

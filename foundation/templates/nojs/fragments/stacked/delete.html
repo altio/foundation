@@ -1,0 +1,21 @@
+{% load i18n %}
+
+{% if perms_lacking %}
+<p>{% trans 'Deleting the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}" would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktrans %}</p>
+<ul>
+  {% for obj in perms_lacking %}
+  <li>{{ obj }}</li>
+  {% endfor %}
+</ul>
+{% elif protected %}
+<p>{% trans 'Deleting the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}" would require deleting the following protected related objects:{% endblocktrans %}</p>
+<ul>
+  {% for obj in protected %}
+    <li>{{ obj }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>{% trans 'Are you sure you want to delete the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}"?{% endblocktrans %}</p>
+<p>{% trans 'All related items will also be deleted!' %}</p>
+
+{% endif %}

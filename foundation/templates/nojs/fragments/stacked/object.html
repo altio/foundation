@@ -1,0 +1,11 @@
+{% load i18n static %}
+
+{% block before-fieldsets %}{% endblock %}
+
+{% block fieldsets %}
+  {% for fieldset in form.fieldsets.values %}
+    {% include fieldset.template with view_controller=form.view_controller %}
+  {% endfor %}
+{% endblock %}
+
+{% block after-fieldsets %}{% endblock %}

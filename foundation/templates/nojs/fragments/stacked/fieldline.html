@@ -1,0 +1,18 @@
+{# expects to have form, fieldset, and fieldline in context #}
+
+<div class="{% block fieldlineclass %}{% if fieldline.fields|length_is:'1' and fieldline.errors %} errors{% endif %}{% if not fieldline.has_visible_field %} hidden{% endif %}{% for field in fieldline %}{% if field.name %} field-{{ field.name }}{% endif %}{% endfor %}{% endblock %}">
+{% block beforefieldline %}{% endblock %}
+{% for field in fieldline %}
+  {% if not field.is_readonly or not view.edit %}
+  {% block beforefield %}{{ field.label_tag }}{% endblock %}
+  {% include 'fragments/field.html' %}
+  {% block afterfield %}
+  {% if form.view_controller.view.edit and field.errors %}{{ field.errors.as_ul }}{% endif %}
+  {% if field.help_text %}
+    <p class="help">{{ field.help_text|safe }}</p>
+  {% endif %}
+  {% endblock %}
+  {% endif %}
+{% endfor %}
+{% block afterfieldline %}{% endblock %}
+</div>

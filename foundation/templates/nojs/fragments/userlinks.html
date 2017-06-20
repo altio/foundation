@@ -1,0 +1,14 @@
+{% load i18n %}
+{% if has_auth_urls %}
+{% if user.is_authenticated %}
+{% if user.is_superuser %}
+<li><a href="{% url 'toggle_superuser' %}">{% if user.acting_as_superuser %}{% trans 'Remove superuser' %}{% else %}{% trans 'Elevate to superuser' %}{% endif %}</a></li>
+{% endif %}{# is superuser #}
+{% if has_admin_urls and user.is_staff %}
+<li><a href="{% url 'admin:index' %}">{% trans 'Admin' %}</a></li>
+{% endif %}{# is staff #}
+<li><a href="{% url 'logout' %}">{% trans 'Log out' %}</a></li>
+{% else %}{# is not authenticated #}
+<li><a href="{% url 'login' %}">{% trans 'Log in' %}</a></li>
+{% endif %}{# is/not authenticated #}
+{% endif %}{# has_auth_urls #}

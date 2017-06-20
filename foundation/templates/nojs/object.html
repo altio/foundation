@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+
+{% block form-top %}
+  <!-- <form action="{{ app_path }}" method="post">  -->
+  <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}action="{{ form_url }}" method="post" id="{{ view.model_name }}_form" novalidate class="{% block formclasses %}{% endblock %}">
+    {% csrf_token %}
+{% endblock %}
+
+{% block form-header %}
+  <h2>
+    {% block object-actions %}
+    <span>
+      {% if not view.edit %}
+        {% ifpermission 'edit' %}&nbsp;<a href="{% mode_url 'edit' %}">{% trans 'Edit' %}</a>{% endifpermission %}
+      {% endif %}
+      {% ifpermission 'delete' %}&nbsp;<a href="{% mode_url 'delete' %}">{% trans 'Delete' %}</a>{% endifpermission %}
+    </span>
+    {% endblock %}
+    {% block form-title %}
+    <span>{{ view.get_title | capfirst }}</span>
+    {% endblock %}
+  </h2>
+{% endblock %}
+
+{% include view.view_template %}
+
+{% block form-bottom %}
+  </form>
+{% endblock %}
+
+{% endblock content %}
