@@ -18,9 +18,9 @@ def backend_context(fbv, **params):
     Wraps a function-based view (FBV) with the each_context and media from the
     backend.
 
-    @backend_context(auth_views.login)
-    class AuthorController(backend.Controller):
-        pass
+    @backend_context(backend)
+    def login(request, *args, **kwargs):
+        return HttpResponse(...)
 
     A param of `backend` can be passed as the backend, otherwise the default
     backend will be used.

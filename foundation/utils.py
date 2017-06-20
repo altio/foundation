@@ -76,7 +76,7 @@ def get_eligible_models(app_config):
 
 
 def get_project_app_configs():
-    for project_app in settings.PROJECT_APPS:
+    for project_app in settings.INSTALLED_APPS:
         app_config = apps.get_app_config(project_app.split('.')[-1])
         if list(get_eligible_models(app_config)):
             yield app_config

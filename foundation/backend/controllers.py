@@ -142,3 +142,6 @@ class Controller(ControllerOptions, Router, BaseController):
                 )
 
         return urlpatterns
+
+    def get_index_url(self):
+        return self.get_url('index')
