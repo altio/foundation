@@ -16,3 +16,47 @@
 {% endfor %}
 {% block afterfieldline %}{% endblock %}
 </div>
+
+
+{% extends 'fragments/stacked/fieldline.html' %}
+
+{% block fieldlineclass %}{% spaceless %}
+{% if fieldline.fields|length_is:'1' %}
+form-group{% if fieldline.errors %} errors{% endif %}{% if not fieldline.has_visible_field %} hidden{% endif %}{% for field in fieldline %}{% if field.name %} field-{{ field.name }}{% endif %}{% endfor %}
+{% else %}
+table-responsive
+{% endif %}
+{% endspaceless %}{% endblock %}
+
+{% block beforefieldline %}
+{% if not fieldline.fields|length_is:'1' %}
+<table class="table table-striped table-hover{% if fieldline.errors %} errors{% endif %}{% if not fieldline.has_visible_field %} hidden{% endif %}{% for field in fieldline %}{% if field.name %} field-{{ field.name }}{% endif %}{% endfor %}">
+<thead>
+  <tr>
+    {% for field in fieldline %}<th>{{ field.label_tag }}</th>{% endfor %}
+  </tr>
+</thead>
+{% endif %}
+{% endblock %}
+
+{% block beforefield %}
+<{% if fieldline.fields|length_is:'1' %}div{% else %}td{% endif %} class="{% if form.view_controller.edit %}form-group{% endif %}">
+{% if fieldline.fields|length_is:'1' %}
+  <div>{{ field.label_tag }}</div>
+{% endif %}
+{% endblock %}
+
+{% block afterfield %}
+{{ fieldline.errors }}
+{% if fieldline.fields|length_is:'1' %}
+</div></div>
+{% else %}
+</td>
+{% endif %}
+{% endblock %}
+
+{% block afterfieldline %}
+{% if not fieldline.fields|length_is:'1' %}
+</table>
+{% endif %}
+{% endblock %}
