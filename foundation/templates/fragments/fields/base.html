@@ -1,0 +1,2 @@
+<span class="form-display" id="display_{{ field.html_name }}">{% block field-display %}{{ field.contents|default:field.empty_value_display }}{% endblock %}</span>
+<span class="form-edit" id="edit_{{ field.html_name }}">{% block field-edit %}{{ field }}{% endblock %}</span>

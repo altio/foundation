@@ -1,0 +1,11 @@
+.form-edit {
+  display: none;
+}
+
+form.edit .form-edit {
+  display: inline;
+}
+
+form.edit .form-display {
+  display: none;
+}

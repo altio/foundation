@@ -1,7 +1,7 @@
 {% extends "embed/base.html" %}
 {% load i18n %}
 
-{% block formclasses %}{% if form.errors %} form-errors{% endif %}{% endblock %}
+{% block formclasses %}form{% endblock %}
 {% block content-header %}
   {% csrf_token %}
   <h2>
@@ -13,8 +13,30 @@
         &nbsp;<a href="{% mode_url view.mode object|default:None %}"><button type="button" class="close"><span aria-hidden="true"><i class="fa fa-expand fa-fw"></i></span></button></a>
       {% endif %}
     {% endblock %}
-    {% block content-title %}
-      <span class="modal-title">{{ view.get_title }}</span>
+    <span class="modal-title">
+    {% block content-title %}{{ view.get_title }}{% endblock %}
+    {% block object-controls %}
+      {% if not view.add %}
+        {% ifpermission 'edit' object %}
+          &nbsp;<a href="#" class="btn btn-default btn-xs edit-this-form form-display"><i class="fa fa-pencil-square-o fa-fw"></i></a>
+        {% endifpermission %}
+      {% endif %}
     {% endblock %}
+    </span>
   </h2>
+{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+{% endblock %}
+
+{% block content-footer %}
+  <input type="hidden" name="post" value="yes" />
+  {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+  {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
+  <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>&nbsp;
+  {% if not is_popup and not_is_embed %}<a href="javascript:history.back()" class="btn btn-default">{% trans 'Back' %}</a>{% endif %}
+  {% if is_popup %}{% if is_embed %}<button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+  {% else %}<a href="javascript:window.close()" class="btn btn-default">{% trans 'Cancel' %}</a>{% endif %}{% endif %}
+{{ block.super }}
 {% endblock %}

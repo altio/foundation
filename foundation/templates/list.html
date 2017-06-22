@@ -21,6 +21,8 @@
       {% endif %}
     {% endblock %}
     {% endcomment %}
-    {% include view.embed_template %}
+    <div id="form-main"><!-- JS assumes it can write form into innerHTML -->
+      {% include view.embed_template %}
+    </div>
   </div>
 {% endblock %}

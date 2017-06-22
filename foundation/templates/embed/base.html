@@ -3,9 +3,9 @@
 {% block content-element %}
   <form {% if has_file_field %}enctype="multipart/form-data" {% endif %}{% spaceless %}
         id="{% block form-id %}{{ view.model_name }}_form{% endblock %}"
-        class="{% block formclasses %}{% endblock %}{% if view.errors %} form-errors{% endif %}"
+        class="{% block formclasses %}{% endblock %}{% if view.edit %} edit{% endif %}{% if is_embed %} embedded{% endif %}{% if view.is_popup %} popup{% endif %}{% if view.errors %} form-errors{% endif %}"
         action="{% mode_url view.mode object|default:None route='embed' %}{% if view.is_popup %}?{{ is_popup_var }}{% endif %}"
-        method="post" novalidate"{% endspaceless %}>
+        method="post" novalidate" {% endspaceless %}>
     <div class="{% block content-header-class %}{% if view.is_popup %}modal-header{% endif %}{% endblock %}">{% block content-header %}
         {% csrf_token %}
         {% block content-title %}<h3>{{ view.get_title|title }}</h3>{% endblock %}

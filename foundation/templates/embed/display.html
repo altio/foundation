@@ -1,11 +1,1 @@
 {% extends "embed/object.html" %}
-
-{% block content-title %}
-  {{ block.super }}
-  {% ifpermission 'edit' object %}
-    &nbsp;<a href="{% mode_url 'edit' object %}" class="btn btn-xs btn-primary"><i class="fa fa-edit fa-fw"></i></a>
-  {% endifpermission %}
-  {% ifpermission 'delete' object %}
-    &nbsp;<a href="{% mode_url 'delete' object %}" class="btn btn-xs btn-danger"><i class="fa fa-trash fa-fw"></i></a>
-  {% endifpermission %}
-{% endblock %}

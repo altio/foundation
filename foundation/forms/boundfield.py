@@ -22,8 +22,7 @@ class BoundField(boundfield.BoundField):
 
     @property
     def empty_value_display(self):
-        return self.view_controller.get_empty_value_display() \
-            if self.view_controller else ''
+        return self.form.empty_value_display
 
     @property
     def is_checkbox(self):
@@ -85,8 +84,7 @@ class ProxyField(object):
 
     @property
     def empty_value_display(self):
-        return self.view_controller.get_empty_value_display() \
-            if self.view_controller else ''
+        return self.form.empty_value_display
 
     def label_tag(self):
         attrs = {}

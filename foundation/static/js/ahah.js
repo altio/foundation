@@ -9,42 +9,43 @@
  * has its own processing on another URL (i.e. modal using AJAX/AHAH)
  */
 
-function getNearestForm(element) {
-  var form = element;
-  if (form.nodeName != 'FORM') {
-    while ((form = form.parentElement) && (form.nodeName != 'FORM'));
+function getModal(element) {
+  while ((element = element.parentElement) && !element.classList.contains('modal'));
+  return element;
+}
+
+function refreshEmbed(form) {
+  let url = form.action;
+  let target = form.parentElement;
+  loadEmbed(url, target);
+}
+
+function onSubmitSuccess(form, data) {
+  // TODO: handle close of window
+  // if a window, close, then refresh page
+
+  let modal = getModal(form);
+  if (modal) {
+    $(modal).modal('hide');
+
+    // original implementation tries to refresh formset related to object
+    // changed... having it look up the page's formset for now since we are
+    // not designing this to allow editing of inline formset objects (yet)
+    // let formset_id = '#' + form.id + 'set';
+    // let formset = document.body.querySelector(formset_id);
+    let formset = document.body.querySelector('form.formset');
+    form.outerHTML = '';
+    refreshEmbed(formset);
+  } else {
+    form.outerHTML = data;
+    displayForm(form);
   }
-  return form;
-}
-
-function editObject(element) {
-  var form = getNearestForm(element);
-  $('#'+form.id+'_edit_button').hide();
-  $('#'+form.id+' *').filter(':input').each(function() {
-    $(this).show();
-    var display = $('#display_' + this.name);
-    display.hide();
-  });
-}
-
-function displayObject(element) {
-  var form = getNearestForm(element);
-  $('#'+form.id+' *').filter(':input').each(function() {
-    $(this).hide();
-    var display = $('#display_' + this.name);
-    display.text(this.value);
-    display.show();
-  });
-  $('#'+form.id+'_edit_button').show();
+  refreshPage();
 }
 
 function submitEmbeddedForm(event) {
   event.preventDefault();
   let form = event.currentTarget;
-
-  // see if this embedded form is in a modal or not
-  let modal = form;
-  while ((modal = modal.parentElement) && !modal.classList.contains('modal'));
 
   /* post the embedded form and render errors or dismiss */
   //$.ajaxPrefilter(function (settings, originalOptions, xhr) {
@@ -61,52 +62,62 @@ function submitEmbeddedForm(event) {
   }).done(function(data, textStatus, jqXHR) {
     if (data.search('form-errors') != -1) {
       form.outerHTML = data;
-      if (modal) {
-        manageModal(modal);
-      } else {
-        // TODO: non-modal is already "ready" to edit... need to re-init js tho
-        // manageEmbed(form)
-      }
+      // get clean copy of element
+      form = document.getElementById(form.id);
+      manageEmbeddedForm(form, true);
     } else {
-      if (modal) {
-        $(modal).modal('hide');
-
-        // original implementation tries to refresh formset related to object
-        // changed... having it look up the page's formset for now since we are
-        // not designing this to allow editing of inline formset objects (yet)
-        // let formset_id = '#' + form.id + 'set';
-        // let formset = document.body.querySelector(formset_id);
-        let formset = document.body.querySelector('.formset');
-        form.outerHTML = '';
-        refreshEmbed(formset);
-      } else {
-        form.outerHTML = data;
-        displayObject(form);
-      }
+      onSubmitSuccess(form, data);
     }
-    refreshPage();
   }).fail(function(jqXHR, textStatus, errorThrown) {
     form.innerHTML = '<p>Sorry there has been an error.  Please try back later.</p>';
   });
 }
 
-/* FOR REFERENCE: BUILT IN TEMPLATE SPACE
-function manageEmbeddedForm(form) {
+function editForm(form) {
+  form.classList.add("edit");
   form.addEventListener("submit", submitEmbeddedForm);
 }
 
-function manageModal(modal) {
-  let form = modal.querySelector('form');
-  manageEmbeddedForm(form);
+function displayForm(form) {
+  form.classList.remove("edit");
 }
-*/
 
-function openPopup(event) {
-  let target = event.currentTarget;
+function getNearestForm(element) {
+  let form = element ? element : $('#content form')[0];
+  if (form.nodeName != 'FORM') {
+    while ((form = form.parentElement) && (form.nodeName != 'FORM'));
+  }
+  return form;
+}
 
+// function manageEmbeddedForm(element, edit) in base.js
+// => refreshControls()
+// => [edit|display]Form()
+// => if modal: manageModal()
+
+function showModal(modal, target) {
+  target.innerHTML = '<div class="modal-body text-center"><i class="fa fa-spinner fa-pulse fa-3x fa-fw"></i><span class="sr-only">Loading...</span></div>';
+  $(modal).modal('show');
+}
+
+function loadEmbed(url, target) {
+  // get the embedded form and render it
+  $.ajax({
+    type: "GET",
+    url: url,
+    contentType: "text/html; charset=utf-8",
+  }).done(function(data, textStatus, jqXHR) {
+    target.innerHTML = data;
+    let form = target.querySelector('form');
+    manageEmbeddedForm(form, false);
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    target.innerHTML = '<p>Sorry there has been an error.  Please try back later.</p>';
+  });
+}
+
+function openPopup(element) {
   // determine if initiator is already in a modal
-  let modal = target;
-  while ((modal = modal.parentElement) && !modal.classList.contains('modal'));
+  let modal = getModal(element);
 
   // launch a modal or popup window, as appropriate
   if (modal) {
@@ -114,55 +125,39 @@ function openPopup(event) {
     window.open(url);
     // TODO: manage popped up window
   } else {
-    let url = target.getAttribute('data-embed-url');
+    let url = element.getAttribute('data-embed-url');
+    let modal = document.body.querySelector('#modal-container');
+    let target = modal.querySelector('.modal-content');
+    showModal(modal, target);
+    loadEmbed(url, target);
+  }
+}
 
-    /* get the embedded form and render it */
-    $.ajax({
-      type: "GET",
-      url: url,
-      contentType: "text/html; charset=utf-8",
-    }).done(function(data, textStatus, jqXHR) {
-      let modal = document.body.querySelector('#modal-container');
-      let modalContent = modal.querySelector('.modal-content');
-      modalContent.innerHTML = data ? data : '';
-      manageModal(modal);
-      refreshPage();
-      $(modal).modal('show');
+function initButtons() {
+  // attach click listener to all buttons that launch a popup
+  for (var ctrl of document.body.querySelectorAll('.popup-trigger')) {
+    ctrl.addEventListener("click", function(event) {
+      let button = event.currentTarget;
+      openPopup(button);
+    });
+  }
+  // attach click listener to all buttons that transition to edit mode
+  for (var ctrl of document.body.querySelectorAll('.edit-this-form')) {
+    ctrl.addEventListener("click", function(event) {
+      let button = event.currentTarget;
+      let form = getNearestForm(button);
+      editForm(form);
     });
   }
 }
 
-function initPopupListeners() {
-  let popupControls = document.body.querySelectorAll('.popup-trigger');
-  for (var ctrl of popupControls) {
-    ctrl.addEventListener("click", openPopup);
-  }
-}
+// function refreshControls() in base.js
+// => initButtons()
 
-/* FOR REFERENCE: BUILT IN TEMPLATE SPACE
-function refreshPage() {
-  initPopupListeners();
-}
+// function refreshPage() in base.js
+// => refreshControls()
 
-function refreshEmbed(form) {
-  let url = form.action;
+// function onLoad() in base.js
+// => refreshPage()
 
-  // get the embedded form and render it
-  $.ajax({
-    type: "GET",
-    url: url,
-    contentType: "text/html; charset=utf-8",
-  }).done(function(data, textStatus, jqXHR) {
-    form.outerHTML = data;
-    refreshPage();
-  }).fail(function(jqXHR, textStatus, errorThrown) {
-    form.innerHTML = '<p>Sorry there has been an error.  Please try back later.</p>';
-  });
-}
-
-function onLoad() {
-  refreshPage();
-}
-
-window.onload = onLoad;
-*/
+// window.onload = onLoad in base.js
