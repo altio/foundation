@@ -27,7 +27,7 @@
 {% endblock %}
 
 {% block content-body %}
-	{% include form.view_controller.form_template %}
+	{% include form.view_controller.form_template with view_controller=form.view_controller %}
 {% endblock %}
 
 {% block content-footer %}

@@ -7,7 +7,9 @@
     {{ formset.management_form }}
     {{ formset.non_form_errors }}
     {% for form in formset %}
+      {% block form %}
       {% include 'fragments/stacked/object.html' with view_controller=form.view_controller %}
+      {% endblock %}
     {% endfor %}
   </fieldset>
 </div>
