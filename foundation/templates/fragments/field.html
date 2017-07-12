@@ -2,6 +2,6 @@
 
 {% block field %}
 {% if field.field.widget.template_name %}{% include field.field.widget.template_name %}
-{% elif field.attr.view_controller %}{% include field.attr.view_controller.inline_template with formset=field.value is_inline=True %}{# inline formset #}
+{% elif field.attr.view_controller %}{% include field.attr.view_controller.inline_template with formset=field.value is_inline=True view_controller=field.attr.view_controller %}{# inline formset #}
 {% else %}{% include 'fragments/fields/base.html' %}{% endif %}
 {% endblock field %}

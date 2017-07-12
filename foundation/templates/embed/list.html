@@ -5,7 +5,7 @@
 {% block content-title %}{% endblock %}
 
 {% block content-body %}
-  {{ block.super }}
+  {% include formset.view_controller.form_template %}
   {% block pagination %}{% pagination view_controller %}{% endblock %}
 {% endblock %}
 
