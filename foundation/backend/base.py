@@ -117,7 +117,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
         # set app_index_class on app to "None" to skip creation
         app_index_class = getattr(app_config, 'app_index_class', None)
         if app_index_class:
-            template_name = getattr(app_config, 'template_name', 'app_index.html')
+            template_name = getattr(app_index_class, 'template_name', 'app_index.html')
             app_index = app_index_class.as_view(
                 app_config=app_config, backend=self, template_name=template_name
             )
