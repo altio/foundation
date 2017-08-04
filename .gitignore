@@ -90,6 +90,7 @@ ENV/
 
 # Local project settings
 .project
+.idea
 .pydevproject
 .settings/
 db.sqlite3
