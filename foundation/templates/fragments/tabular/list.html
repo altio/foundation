@@ -8,7 +8,13 @@
     </p>
     {{ formset.non_form_errors }}
   {% endif %}
-  <table class="{% block tableclasses %}{% endblock %}" id="{% block tableid %}table-{{ formset.prefix }}{% endblock %}"{% block tableattrs %}{% endblock %}>
+  {% if not formset|length %}
+  <div class="empty-table">
+    {% include 'fragments/empty_list.html' %}
+    {% include 'fragments/list_actions.html' %}
+  </div>
+  {% endif %}
+  <table class="{% block tableclasses %}table{% endblock %}" id="{% block tableid %}table-{{ formset.prefix }}{% endblock %}"{% block tableattrs %}{% endblock %}>
     <thead>
       <tr>
         <th class="original"></th>
@@ -25,15 +31,11 @@
 
         {% block headers-actions %}
         <th>{% spaceless %}
-          {% if view.edit %}
-            {% if is_inline %}{% trans 'Delete?' %}{% endif %}
-          {% else %}
-            {% ifpermission 'add' %}{% spaceless %}
-            <a href="#" class="popup-trigger"
-            data-url="{% mode_url 'add' %}?{{ is_popup_var }}"
-            data-embed-url="{% mode_url 'add' route='embed' %}?{{ is_popup_var }}">
-            {% endspaceless %}{% trans ' Add New ' %}{{ formset.view_controller.verbose_name|title }}</a>{% endifpermission %}
-          {% endif %}
+        {% if view.edit %}
+          {% if is_inline %}{% trans 'Delete?' %}{% endif %}
+        {% else %}
+          {% include 'fragments/list_actions.html' %}
+        {% endif %}
         {% endspaceless %}</th>
         {% endblock %}
       </tr>
@@ -42,9 +44,6 @@
     <tbody>
     {% for form in formset %}
       {% include 'fragments/tabular/object.html' %}
-    {% empty %}
-      {# TODO: eval if this should move to outside of table tags... #}
-      {% include 'fragments/empty_list.html' %}
     {% endfor %}
     </tbody>
   </table>

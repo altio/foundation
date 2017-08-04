@@ -38,7 +38,7 @@ function onSubmitSuccess(form, data) {
     refreshEmbed(formset);
   } else {
     form.outerHTML = data;
-    displayForm(form);
+    manageEmbeddedForm(form);
   }
   refreshPage();
 }
@@ -64,7 +64,7 @@ function submitEmbeddedForm(event) {
       form.outerHTML = data;
       // get clean copy of element
       form = document.getElementById(form.id);
-      manageEmbeddedForm(form, true);
+      manageEmbeddedForm(form);
     } else {
       onSubmitSuccess(form, data);
     }
@@ -75,7 +75,6 @@ function submitEmbeddedForm(event) {
 
 function editForm(form) {
   form.classList.add("edit");
-  form.addEventListener("submit", submitEmbeddedForm);
 }
 
 function displayForm(form) {
@@ -109,7 +108,7 @@ function loadEmbed(url, target) {
   }).done(function(data, textStatus, jqXHR) {
     target.innerHTML = data;
     let form = target.querySelector('form');
-    manageEmbeddedForm(form, false);
+    manageEmbeddedForm(form);
   }).fail(function(jqXHR, textStatus, errorThrown) {
     target.innerHTML = '<p>Sorry there has been an error.  Please try back later.</p>';
   });
@@ -147,6 +146,14 @@ function initButtons() {
       let button = event.currentTarget;
       let form = getNearestForm(button);
       editForm(form);
+    });
+  }
+  // attach click listener to all buttons that transition to edit mode
+  for (var ctrl of document.body.querySelectorAll('.display-this-form')) {
+    ctrl.addEventListener("click", function(event) {
+      let button = event.currentTarget;
+      let form = getNearestForm(button);
+      displayForm(form);
     });
   }
 }

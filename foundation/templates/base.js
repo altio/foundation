@@ -2,14 +2,10 @@ function manageModal(modal) {
   {% block manageModal %}{% endblock %}
 }
 
-function manageEmbeddedForm(element, edit) {
+function manageEmbeddedForm(element) {
   refreshControls();
   let form = getNearestForm(element);
-  if (edit) {
-    editForm(form);
-  } else {
-    displayForm(form);
-  }
+  form.addEventListener("submit", submitEmbeddedForm);
 
   let modal = getModal(form);
   if (modal) {

@@ -32,11 +32,18 @@
 
 {% block content-footer %}
   <input type="hidden" name="post" value="yes" />
-  {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
+  {% if view.is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
   {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
-  <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>&nbsp;
-  {% if not is_popup and not_is_embed %}<a href="javascript:history.back()" class="btn btn-default">{% trans 'Back' %}</a>{% endif %}
-  {% if is_popup %}{% if is_embed %}<button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
-  {% else %}<a href="javascript:window.close()" class="btn btn-default">{% trans 'Cancel' %}</a>{% endif %}{% endif %}
-{{ block.super }}
+  {% if not view.edit %}<span class="form-display">{% block form-display-controls %}
+    {% ifpermission 'edit' object %}<a href="#" class="btn btn-primary edit-this-form"><i class="fa fa-pencil-square-o fa-fw"></i>{% trans 'Edit' %}</a>{% endifpermission %}
+  {% endblock %}</span>{% endif %}
+  <div class="form-edit">{% block form-edit-controls %}
+    <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+    {% if not view.edit %}&nbsp;<a href="#" class="btn btn-default display-this-form">{% trans 'Cancel Edits' %}</a>{% endif %}
+  {% endblock %}</div>
+  {% if view.is_popup %}{# only dismiss/close on popup #}
+    {% if is_embed %}&nbsp;<button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+    {% else %}&nbsp;<a href="javascript:window.close()" class="btn btn-default">{% trans 'Close' %}</a>{% endif %}
+  {% else %}{% if not is_embed %}<a href="javascript:history.back()" class="btn btn-default">{% trans 'Back' %}</a>{% endif %}{% endif %}
+  {{ block.super }}
 {% endblock %}

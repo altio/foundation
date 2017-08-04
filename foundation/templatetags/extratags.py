@@ -1,6 +1,43 @@
-from django.db.models import QuerySet, Model
 from django.template.defaulttags import register, Node, NodeList, TemplateSyntaxError
 from foundation.forms import models
+from django.db.models import Model
+
+
+def resolve_from_context(context, obj=None):
+    """
+    Resolve view_controller and, if applicable, in-focus object.
+
+    In the event an obj is not explicitly passed, will infer "in-focus"
+    form(set) from context.
+
+    TODO: maybe object can be backend (mode=name) or app (mode=index) in the
+    future... will allow this to bomb if we are in a form(set) less context
+    """
+
+    if obj is None:
+        # fallback lookup for object is only used by delete view...
+        obj = context['form' if 'form' in context else (
+            'formset' if 'formset' in context else 'object'
+        )]
+
+    if isinstance(obj, models.BaseInlineFormSet):
+        view_controller = obj.view_controller
+        obj = obj.instance
+    elif isinstance(obj, models.BaseModelFormSet):
+        view_controller = obj.view_controller
+        obj = None
+    elif isinstance(obj, models.FormSetModelForm):
+        view_controller = obj.view_controller
+        obj = obj.original
+    elif isinstance(obj, models.ModelForm):
+        view_controller = obj.view_controller
+        obj = obj.instance
+    elif isinstance(obj, Model):
+        view_controller = obj.view_controller
+    else:
+        raise ValueError('"obj" is unsupported type: {}'.format(type(obj)))
+
+    return view_controller, obj
 
 
 class IfPermissionNode(Node):
@@ -17,29 +54,7 @@ class IfPermissionNode(Node):
         mode = self.mode.resolve(context, True)
         obj = self.obj.resolve(context, True) if self.obj else None
 
-        if obj is None:
-            view_controller = context['view']
-            if 'form' in context:
-                obj = context['form'].instance
-        elif isinstance(obj, QuerySet):
-            view_controller = getattr(obj, 'view_controller', context['view'])
-            obj = None
-        elif isinstance(obj, Model):
-            view_controller = getattr(obj, 'view_controller', context['view'])
-        elif isinstance(obj, models.BaseInlineFormSet):
-            view_controller = obj.view_controller
-            obj = obj.instance
-        elif isinstance(obj, models.BaseModelFormSet):
-            view_controller = obj.view_controller
-            obj = None
-        elif isinstance(obj, models.FormSetModelForm):
-            view_controller = obj.view_controller
-            obj = obj.original
-        elif isinstance(obj, models.ModelForm):
-            view_controller = obj.view_controller
-            obj = obj.instance
-        else:
-            raise ValueError('"obj" is unsupported type: {}'.format(type(obj)))
+        view_controller, obj = resolve_from_context(context, obj)
 
         if (obj.has_permission(view_controller, mode) if obj else view_controller.has_permission(mode)):
             return self.nodelist_true.render(context)
@@ -86,29 +101,6 @@ def mode_url(context, mode, obj=None, route=None):
     (including backend).
     """
 
-    # derive a view controller from context or supported types
-    if obj is None:
-        view_controller = context['view']
-        if 'form' in context:
-            obj = context['form'].instance
-    elif isinstance(obj, QuerySet):
-        view_controller = getattr(obj, 'view_controller', context['view'])
-        obj = None
-    elif isinstance(obj, Model):
-        view_controller = getattr(obj, 'view_controller', context['view'])
-    elif isinstance(obj, models.BaseInlineFormSet):
-        view_controller = obj.view_controller
-        obj = obj.instance
-    elif isinstance(obj, models.BaseModelFormSet):
-        view_controller = obj.view_controller
-        obj = None
-    elif isinstance(obj, models.FormSetModelForm):
-        view_controller = obj.view_controller
-        obj = obj.original
-    elif isinstance(obj, models.ModelForm):
-        view_controller = obj.view_controller
-        obj = obj.instance
-    else:
-        raise ValueError('"obj" is unsupported type: {}'.format(type(obj)))
+    view_controller, obj = resolve_from_context(context, obj)
 
     return view_controller.get_url(mode, obj=obj, route=route)

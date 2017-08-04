@@ -103,7 +103,7 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
             controller_namespace = controller.model_namespace
             controller_prefix = controller.url_prefix
 
-            # get named patterns from controller and extend 
+            # get named patterns from controller and extend
             controller_urlpatterns = controller.get_urlpatterns()
             for name, patterns in controller_urlpatterns.items():
                 urlpatterns[name].append(
@@ -228,7 +228,6 @@ class Backend(six.with_metaclass(MediaDefiningClass, Router)):
                     url(r'^{}/'.format(self.auth_url_prefix), include(auth_urlpatterns)),
                 ]
             urlpatterns.extend(auth_urlpatterns)
-
 
         return urlpatterns
 

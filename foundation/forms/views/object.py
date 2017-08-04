@@ -39,6 +39,7 @@ class DeleteView(ObjectMixin, ControllerTemplateMixin, edit.BaseDeleteView):
             self.backend, router.db_for_write(self.model))
 
         kwargs.update(
+            object=self.object,
             object_name=object_name,
             deleted_objects=deleted_objects,
             model_count=dict(model_count).items(),

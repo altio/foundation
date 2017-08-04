@@ -19,8 +19,8 @@
         {% if not is_inline and form.original and not form.view_controller.edit %}
           {% ifpermission 'display' form %}{% spaceless %}
           <a href="#" class="popup-trigger"
-             data-url="{% mode_url 'edit' form %}?{{ is_popup_var }}"
-             data-embed-url="{% mode_url 'edit' form route='embed' %}?{{ is_popup_var }}">
+          data-url="{% mode_url 'display' form %}?{{ is_popup_var }}"
+          data-embed-url="{% mode_url 'display' form route='embed' %}?{{ is_popup_var }}">
           {% endspaceless %}{% endifpermission %}{{ form.original }}{% ifpermission 'display' form %}</a>{% endifpermission %}
         {% endif %}
       {% endblock %}
@@ -32,7 +32,14 @@
   {% endif %}{% endblock field %}{% endfor %}{% endblock %}
 
   <td class="{% block column-actions-classes %}text-right{% endblock %}">{% block column-actions %}
-    {% if not is_inline %}{% ifpermission 'delete' form %}{% spaceless %}
+    {% if not is_inline %}{% ifpermission 'edit' form %}{% spaceless %}
+    <button type="button" class="btn btn-xs btn-primary popup-trigger"
+            data-url="{% mode_url 'edit' form %}?{{ is_popup_var }}"
+            data-embed-url="{% mode_url 'edit' form route='embed' %}?{{ is_popup_var }}">
+      <i class="fa fa-edit fa-fw"></i>
+    </button>
+    {% endspaceless %}{% endifpermission %}
+    {% ifpermission 'delete' form %}{% spaceless %}
     <button type="button" class="btn btn-xs btn-danger popup-trigger"
             data-url="{% mode_url 'delete' form %}?{{ is_popup_var }}"
             data-embed-url="{% mode_url 'delete' form route='embed' %}?{{ is_popup_var }}">

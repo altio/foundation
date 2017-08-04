@@ -1,14 +1,39 @@
 {% extends 'embed/object.html' %}
 {% load i18n %}
 
+{% block content-body %}
+{% if perms_lacking %}
+<p>{% trans 'Deleting the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}" would result in deleting related objects, but your account doesn't have permission to delete the following types of objects:{% endblocktrans %}</p>
+<ul>
+  {% for obj in perms_lacking %}
+  <li>{{ obj }}</li>
+  {% endfor %}
+</ul>
+{% elif protected %}
+<p>{% trans 'Deleting the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}" would require deleting the following protected related objects:{% endblocktrans %}</p>
+<ul>
+  {% for obj in protected %}
+    <li>{{ obj }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>{% trans 'Are you sure you want to delete the ' %}{{ view.verbose_name }}{% blocktrans with escaped_object=object %}: "{{ escaped_object }}"? All of the following related items will be deleted:{% endblocktrans %}</p>
+
+{% include "fragments/object_delete_summary.html" %}
+
+<h2>{% trans "Objects" %}</h2>
+<ul>{{ deleted_objects|unordered_list }}</ul>
+
+{% endif %}
+{% endblock %}
+
 {% block content-footer %}
 {% if not perms_lacking %}
   <div>
     <input type="hidden" name="post" value="yes" />
     {% if is_popup %}<input type="hidden" name="{{ is_popup_var }}" value="1" />{% endif %}
     {% if to_field %}<input type="hidden" name="{{ to_field_var }}" value="{{ to_field }}" />{% endif %}
-    <button type="submit" class="btn btn-primary">{% trans "Yes, I'm sure" %}</button> | <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
+    <button type="submit" class="btn btn-primary">{% trans "Yes, I'm sure" %}</button> <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Cancel' %}</button>
   </div>
 {% endif %}
-{{ block.super }}
 {% endblock %}

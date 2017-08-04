@@ -1,0 +1,7 @@
+{% load i18n %}
+
+{% ifpermission 'add' %}{% spaceless %}
+<a href="#" class="popup-trigger"
+data-url="{% mode_url 'add' %}?{{ is_popup_var }}"
+data-embed-url="{% mode_url 'add' route='embed' %}?{{ is_popup_var }}">
+{% endspaceless %}{% trans ' Add New ' %}{{ formset.view_controller.verbose_name|title }}</a>{% endifpermission %}

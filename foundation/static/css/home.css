@@ -77,3 +77,10 @@ div>i.fa {
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
+.table>.table-empty {
+  display: none;
+}
+
+.table.empty>.table-empty {
+  display: block;
+}
