@@ -55,7 +55,7 @@ class Model(AssociativeMixin, models.Model):
         has_permission = view_controller.has_permission(mode)
 
         # otherwise, refer to the view controller's private (auth) queryset
-        if has_permission:
+        if has_permission and mode not in view_controller.public_modes:
             has_permission = self in view_controller.private_queryset
 
         return has_permission
