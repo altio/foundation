@@ -45,6 +45,7 @@ class ViewOptions(PartialViewOptions):
 
     # search options
     search_fields = ()
+    search_by_field = False  # when True, query from field names vs. SEARCH_VAR
 
 
 class ControllerOptions(ViewOptions):
