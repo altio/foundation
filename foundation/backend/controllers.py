@@ -26,6 +26,7 @@ class PartialViewOptions(ModelOptions):
     """
 
     fk_name = None
+    slug_field = 'slug'
     model = None
     parent = None
 

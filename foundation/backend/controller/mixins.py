@@ -21,9 +21,15 @@ class SingleObjectMixin(object):
 
         obj = None
         if object_id:
-            field_name = 'pk' if object_id.isdigit() else 'slug'
+            # TODO come back and implement from_field
+            field = (
+                model._meta.pk 
+                if object_id.isdigit() 
+                else model._meta.get_field(self.slug_field)
+            )
             try:
-                obj = queryset.get(**{field_name: object_id})
+                object_id = field.to_python(object_id)
+                obj = queryset.get(**{field.name: object_id})
             except (model.DoesNotExist, ValidationError, ValueError, FieldError):
                 obj = None
 
