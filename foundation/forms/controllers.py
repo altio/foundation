@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 from .. import backend
 from . import models
 from .views.base import FormChild, FormParent
-from .viewsets import PageViewSet
+from .viewsets import PageViewSet, EmbedViewSet
 from django.utils.functional import cached_property
 
-__all__ = 'FormController', 'FormInline'
+__all__ = 'PageController', 'EmbedController', 'FormInline'
 
 
 class FormOptions(backend.controllers.PartialViewOptions):
@@ -35,15 +35,28 @@ class FormOptions(backend.controllers.PartialViewOptions):
     inline_style = 'tabular'
 
 
-class FormController(FormOptions, backend.Controller):
+class PageController(FormOptions, backend.Controller):
     """
-    Convenience Controller with FormViewSet attached to default namespace.
+    Convenience Controller with PageViewSet attached to default namespace.
     """
 
     view_child_class = FormChild
     view_parent_class = FormParent
     viewsets = {
         None: PageViewSet,
+    }
+
+
+class EmbedController(PageController):
+    """
+    Convenience Controller with PageViewSet attached to default namespace and
+    EmbedViewSet attached to "embed" namespace to allow for AHAH calls using
+    complete forms.
+    """
+
+    viewsets = {
+        None: PageViewSet,
+        'embed': EmbedViewSet,
     }
 
 
